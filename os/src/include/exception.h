@@ -39,7 +39,7 @@ struct regs {
 };
 
 
-// 36个 
+// 36个   8字节 
 // sp 指向 从低地址到高地址 依次为  x0-x31和 4个csr寄存器，通过a0传入参数
 struct context {
     struct regs gr;

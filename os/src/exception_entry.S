@@ -47,7 +47,7 @@ ir_from_u:
     # 保存 x1
     SAVE    x1, 1
 
-    # 保存 x3 至 x31
+    # 保存 x3 - x31
     .set    n, 3
     .rept   29
         N %n SAVE
@@ -110,7 +110,7 @@ ir_from_u:
 __restore:
 
     # a0 从哪里 赋值
-    # sp ？ 依然在内核栈顶
+    # sp ？同  a0依然在内核栈顶
     # 为了下降特权级到 U， 直接调用 __restore
     # 在 中断处理 完后 返回 U 或者 S
     mv sp, a0
