@@ -4,11 +4,12 @@
 # Context 的大小
 .set    CONTEXT_SIZE, 36
 
-
+# reg -> sp:
 .macro SAVE reg, offset
     sd  \reg, \offset*REG_SIZE(sp)
 .endm
 
+# sp: -> regs
 .macro LOAD reg, offset
     ld  \reg, \offset*REG_SIZE(sp)
 .endm
@@ -21,7 +22,7 @@
 
 #-------------------------------------------
     .section .text
- .align 2
+    .align 2
     .globl __saveall
 # 进入中断
 # 保存 Context 并且进入的中断处理函数
@@ -54,7 +55,7 @@ ir_from_u:
     .endr
 
     
-    # 若从内核态进入中断，此时 sscratch 为内核栈地址， 需要清零
+    # 若从内核态进入中断，此时 sscratch 为内核栈地址（未分配context空间）， 先保存再清零
     # 若从用户态进入中断，此时 sscratch 为用户栈地址
     # sscratch-> s0   再 x0 -> sscratch
     csrrw   s0, sscratch, x0
@@ -126,7 +127,7 @@ __restore:
 to_u:
     addi    s0, sp, REG_SIZE*CONTEXT_SIZE
     csrw    sscratch, s0
-    # 如果 返回用户态， 需要设置sscratch 为内核 栈 地址
+    # 如果 返回用户态， 需要设置sscratch 为内核 栈 地址（未分配context空间）
     # 如果 返回内核态， sscratch要清零， 在saveall中已经清零 ？
 
 to_k:
@@ -153,6 +154,6 @@ to_k:
 
     # 恢复 sp（x2）这里最后恢复
     # 如果 返回 用户态 或 下降特权级到用户态 ， 该地址保存 用户栈指针
-    # 如果 返回 内核态 ， 该地只保存 内核态指针
+    # 如果 返回 内核态 ， 该地址保存 内核栈指针
     LOAD    x2, 2
     sret
