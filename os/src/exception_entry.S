@@ -26,14 +26,26 @@
 # 进入中断
 # 保存 Context 并且进入的中断处理函数
 __saveall:
+
+    # 判断是从内核态还是 用户态进入 中断
+    # 原子操作交换sp和sscratch
+    csrrw   sp, sscratch, sp
+
+    # 如果SP = 0 说明从内核态进入中断，无需切换栈，将 sscratch 的值读回 sp ，此时 sp,sscratch 均保存内核栈
+    bnez    sp, ir_from_u
+
+ir_from_k:
+    csrr    sp, sscratch
+    #csrrw  sp, sscratch, sp
+
+ir_from_u:
+
     # 在栈上开辟 Context 所需的空间
     addi    sp, sp, -1*CONTEXT_SIZE*REG_SIZE
 
-    # 保存通用寄存器，除了 x0（固定为 0）
+    # 保存 x1
     SAVE    x1, 1
-    # 将原来的 sp（x2）写入 2 位置
-    addi    x1, sp, 34*8
-    SAVE    x1, 2
+
     # 保存 x3 至 x31
     .set    n, 3
     .rept   29
@@ -41,11 +53,23 @@ __saveall:
         .set    n, n + 1
     .endr
 
-    # 取出 CSR 并保存
+    
+    # 若从内核态进入中断，此时 sscratch 为内核栈地址， 需要清零
+    # 若从用户态进入中断，此时 sscratch 为用户栈地址
+    # sscratch-> s0   再 x0 -> sscratch
+    csrrw   s0, sscratch, x0
+    SAVE    s0, 2
+
+    # 保存 CSR 
     csrr    s1, sstatus
     csrr    s2, sepc
+    csrr    s3, stval
+    csrr    s4, scause
     SAVE    s1, 32
     SAVE    s2, 33
+    SAVE    s3, 34
+    SAVE    s4, 35
+
 
     # 调用 e_dispatch，传入参数
     mv      a0, sp
