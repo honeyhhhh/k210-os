@@ -1,0 +1,12 @@
+{
+    "files.associations": {
+        "riscv_asm.h": "c",
+        "sbi.h": "c",
+        "exception.h": "c",
+        "stddef.h": "c",
+        "string.h": "c",
+        "stdio.h": "c",
+        "console.h": "c"
+    },
+    "C_Cpp.errorSquiggles": "Disabled"
+}
