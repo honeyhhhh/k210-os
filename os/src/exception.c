@@ -1,6 +1,7 @@
 #include "include/exception.h"
 #include "include/riscv_asm.h"
 #include "include/console.h"
+#include "include/stdio.h"
 
 void idt_init(void)
 {
@@ -8,7 +9,8 @@ void idt_init(void)
 
 
     csr_write(CSR_SSCRATCH, 0);
-    csr_write(CSR_STVEC, &__saveall);
+    csr_write(CSR_STVEC, &__saveall);   // 由于函数地址四字节对其，所以设置后模式为Direct
+    printf("set stvec : [%p]\n", &__saveall);
 }
 
 
@@ -27,10 +29,12 @@ static inline void exception_dispatch(struct context *f)
     if ((intptr_t)f->cause < 0)
     {
         cons_puts("interrupt\n");
+        printf("I code :[%p]\n", f->cause);
     }
     else
     {
         cons_puts("sync_exception\n");
+        printf("E code :[%p]\n", f->cause);
     }
     
 }

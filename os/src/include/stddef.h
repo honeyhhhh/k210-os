@@ -50,7 +50,11 @@ struct list_head {
 };
 
 
-
+typedef struct
+{
+    uint64_t sec;  // 自 Unix 纪元起的秒数
+    uint64_t usec; // 微秒数
+} TimeVal;
 
 
 

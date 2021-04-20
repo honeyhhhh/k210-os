@@ -46,5 +46,11 @@ void sbi_shutdown(void)
 	sbi_ecall(SBI_SHUTDOWN, 0, 0, 0, 0, 0, 0, 0);
 }
 
+void set_timer(uint64_t stime_value)
+{
+    sbi_ecall(SBI_SET_TIMER, 0, stime_value, 0, 0, 0, 0, 0);
+}
+
+
 
 

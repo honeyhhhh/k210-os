@@ -53,7 +53,7 @@ int sbi_console_getchar(void);
 void sbi_shutdown(void);
 
 
-
+void set_timer(uint64_t stime_value);
 
 
 

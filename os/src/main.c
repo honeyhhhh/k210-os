@@ -33,6 +33,12 @@ void main()
 	printf(".bss : 			[%p ~ %p]\n", &sbss, &ebss);
 	printf("kernel_end: 		[%p]\n", &ekernel);
 
+	idt_init();
+	irq_enable();
+	asm volatile ("ebreak");
+
+	printf(" ? ");
+
 
 	
 	while(1) {}
