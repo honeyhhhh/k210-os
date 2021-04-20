@@ -35,7 +35,7 @@ void main()
 
 	idt_init();
 	irq_enable();
-	asm volatile ("ebreak");
+	asm volatile ("ebreak");  // epc?
 
 	printf(" ? ");
 

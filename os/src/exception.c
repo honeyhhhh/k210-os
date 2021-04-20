@@ -2,6 +2,7 @@
 #include "include/riscv_asm.h"
 #include "include/console.h"
 #include "include/stdio.h"
+#include "include/timer.h"
 
 void idt_init(void)
 {
@@ -30,6 +31,7 @@ static inline void exception_dispatch(struct context *f)
     {
         cons_puts("interrupt\n");
         printf("I code :[%p]\n", f->cause);
+        irq_handler(f);
     }
     else
     {
@@ -42,6 +44,25 @@ static inline void exception_dispatch(struct context *f)
 void e_dispatch(struct context *f)
 {
     exception_dispatch(f);
+}
+
+
+void irq_handler(struct context *f)
+{
+    intptr_t cause = (tf->cause << 1) >> 1;     //去掉符号位
+    switch (cause) 
+    {
+        case IRQ_S_TIMER:
+            set_next_trigger();     //设置下一次时钟中断
+            if (++TICKS % TICKS_PER_SEC == 0) {
+                printf("it's time to sleep\n");
+            }
+            break;
+
+        default:
+            break;
+    }
+
 }
 
 
