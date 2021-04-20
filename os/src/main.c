@@ -2,6 +2,7 @@
 #include "include/stddef.h"
 #include "include/stdio.h"
 #include "include/string.h"
+#include "include/timer.h"
 
 int i;
 extern uintptr_t skernel;
@@ -35,11 +36,10 @@ void main()
 
 	idt_init();
 	irq_enable();
-	asm volatile ("ebreak");  // epc?
+	//asm volatile ("ebreak");  // epc?
+	//printf(" ? ");  //无法显示
 
-	printf(" ? ");
-
-
+	timer_init();
 	
 	while(1) {}
 }

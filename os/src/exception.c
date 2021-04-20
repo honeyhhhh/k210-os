@@ -4,14 +4,15 @@
 #include "include/stdio.h"
 #include "include/timer.h"
 
+extern void __saveall(void);
+extern void __restore(void);
+
 void idt_init(void)
 {
-    extern void __saveall(void);
-
-
     csr_write(CSR_SSCRATCH, 0);
     csr_write(CSR_STVEC, &__saveall);   // 由于函数地址四字节对其，所以设置后模式为Direct
     printf("set stvec : [%p]\n", &__saveall);
+    printf("set restore : [%p]\n", &__restore);
 }
 
 
@@ -49,7 +50,8 @@ void e_dispatch(struct context *f)
 
 void irq_handler(struct context *f)
 {
-    intptr_t cause = (tf->cause << 1) >> 1;     //去掉符号位
+    intptr_t cause = (f->cause << 1) >> 1;     //去掉符号位
+    printf("%d\n", cause);
     switch (cause) 
     {
         case IRQ_S_TIMER:
@@ -62,6 +64,9 @@ void irq_handler(struct context *f)
         default:
             break;
     }
+    printf("done! \n");
+    //f->epc = (uintptr_t)&__restore;
+    printf("sepc: [%p]\n", f->epc);
 
 }
 

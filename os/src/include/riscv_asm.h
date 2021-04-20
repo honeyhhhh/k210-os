@@ -201,12 +201,12 @@ static inline void wait_for_interrupt(void)
 	__asm__ __volatile__ ("wfi");
 }
 
- static inline uint64 r_mhartid()
+static inline uint64_t r_mhartid()
 {
 	uint64_t x;
 	asm volatile("csrr %0, mhartid" : "=r" (x) );
 	return x;
- }
+}
 
 
 

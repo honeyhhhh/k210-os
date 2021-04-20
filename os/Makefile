@@ -42,6 +42,7 @@ OBJS += \
   $S/console.o \
   $S/stdio.o \
   $S/string.o \
+  $S/timer.o \
   $S/exception.o \
   $S/exception_entry.o \
 
