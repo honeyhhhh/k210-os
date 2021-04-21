@@ -45,7 +45,7 @@ static inline void exception_dispatch(struct context *f)
 struct context *e_dispatch(struct context *f)
 {
     exception_dispatch(f);
-    return f;
+    return f;                   // 用于__restore 的 mov sp,a0
 }
 
 
