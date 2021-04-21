@@ -40,6 +40,7 @@ void main()
 	//printf(" ? ");  //无法显示
 
 	timer_init();
+	printf(" ? ");
 	
 	while(1) {}
 }

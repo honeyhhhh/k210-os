@@ -42,16 +42,16 @@ static inline void exception_dispatch(struct context *f)
     
 }
 
-void e_dispatch(struct context *f)
+struct context *e_dispatch(struct context *f)
 {
     exception_dispatch(f);
+    return f;
 }
 
 
 void irq_handler(struct context *f)
 {
     intptr_t cause = (f->cause << 1) >> 1;     //去掉符号位
-    printf("%d\n", cause);
     switch (cause) 
     {
         case IRQ_S_TIMER:
@@ -64,9 +64,9 @@ void irq_handler(struct context *f)
         default:
             break;
     }
-    printf("done! \n");
+    //printf("done! \n");
     //f->epc = (uintptr_t)&__restore;
-    printf("sepc: [%p]\n", f->epc);
+    //printf("sepc: [%p]\n", f->epc);
 
 }
 
