@@ -38,6 +38,7 @@ static inline void exception_dispatch(struct context *f)
     {
         cons_puts("sync_exception\n");
         printf("E code :[%p]\n", f->cause);
+        exc_handler(f);
     }
     
 }
@@ -70,5 +71,19 @@ void irq_handler(struct context *f)
 
 }
 
+
+void exc_handler(struct context *f)
+{
+    switch (f->cause)
+    {
+        case EXC_BREAKPOINT:
+            printf("Breakpoint !\n");
+            f->epc += 2; //?
+            break;
+        
+        default:
+            break;
+    }
+}
 
 

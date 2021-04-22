@@ -27,6 +27,10 @@ opensbi_elf := $(FW)/fw_jump.elf
 opensbi_bin := $(FW)/fw_jump.bin
 
 
+rustsbi_elf := $(FW)/rustsbi-qemu
+rustsbi_bin := $(FW)/rustsbi-qemu.bin
+
+
 
 
 OJS =
@@ -67,7 +71,7 @@ qemu: $(bin)
 	$(V)$(QEMU) \
 		-machine virt \
 		-nographic \
-		-bios $(opensbi_bin) \
+		-bios $(rustsbi_bin) \
 		-device loader,file=$(bin),addr=0x80200000
 
 debug: $(bin)

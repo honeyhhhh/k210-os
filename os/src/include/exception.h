@@ -59,7 +59,7 @@ void idt_init(void);
 static inline void exception_dispatch(struct context *f);
 struct context *e_dispatch(struct context *f);
 void irq_handler(struct context *f);
-//void exc_handler(struct context *f);
+void exc_handler(struct context *f);
 
 
 

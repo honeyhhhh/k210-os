@@ -36,8 +36,8 @@ void main()
 
 	idt_init();
 	irq_enable();
-	//asm volatile ("ebreak");  // epc?
-	//printf(" ? ");  //无法显示
+	asm volatile ("ebreak");
+	printf(" ? ");  //无法显示
 
 	timer_init();
 	printf(" ? ");
