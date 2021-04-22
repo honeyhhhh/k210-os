@@ -53,7 +53,7 @@ OBJS += \
 #SRC1 := $(wildcard $S/*.c)
 #SRC2 := $(wildcard $S/*.S)
 #OBJS1 := $(addprefix $O/, $(notdir $(patsubst %.c,%.o,$(SRC1))))
-#OBJS2 := $(addprefix $O/, $(notdir $(patsubst %.S,%.o,$(SRC2))))
+#OBJS2 := $(addprefix $O/, $(notdir $(patsubst %.S,%.o,$(SRC2)))) 
 
 linker := $S/linker.ld
 
