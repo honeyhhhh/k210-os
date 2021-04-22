@@ -37,10 +37,10 @@ void main()
 	idt_init();
 	irq_enable();
 	asm volatile ("ebreak");
-	printf(" ? ");  //无法显示
+	printf(" ? ");  //
 
-	timer_init();
-	printf(" ? ");
+	//timer_init();
+	//printf(" ? ");
 	
 	while(1) {}
 }
