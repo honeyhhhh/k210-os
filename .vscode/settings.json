@@ -6,7 +6,9 @@
         "stddef.h": "c",
         "string.h": "c",
         "stdio.h": "c",
-        "console.h": "c"
+        "console.h": "c",
+        "random": "cpp",
+        "unistd.h": "c"
     },
     "C_Cpp.errorSquiggles": "Disabled",
     "C_Cpp.dimInactiveRegions": false

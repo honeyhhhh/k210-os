@@ -3,6 +3,7 @@
 #include "include/console.h"
 #include "include/stdio.h"
 #include "include/timer.h"
+#include "include/syscall.h"
 
 extern void __saveall(void);
 extern void __restore(void);
@@ -77,13 +78,22 @@ void exc_handler(struct context *f)
     switch (f->cause)
     {
         case EXC_BREAKPOINT:
-            printf("Breakpoint !\n");
-            f->epc += 2; //?
+            breakpoint();
             break;
         
+        case EXC_SYSCALL:
+            syscall_handler();
+            break;
+
         default:
             break;
     }
 }
 
+
+void breakpoint(struct context *f)
+{
+    printf("Breakpoint at [%p]!\n", f->epc);
+    f->epc += 2; //?
+}
 
