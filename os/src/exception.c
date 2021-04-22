@@ -27,6 +27,13 @@ void irq_disable(void)
     csr_clear(CSR_SSTATUS, SSTATUS_SIE);
 }
 
+
+void breakpoint(struct context *f)
+{
+    printf("Breakpoint at [%p]!\n", f->epc);
+    f->epc += 2; //?
+}
+
 static inline void exception_dispatch(struct context *f)
 {
     if ((intptr_t)f->cause < 0)
@@ -78,11 +85,11 @@ void exc_handler(struct context *f)
     switch (f->cause)
     {
         case EXC_BREAKPOINT:
-            breakpoint();
+            breakpoint(f);
             break;
         
         case EXC_SYSCALL:
-            syscall_handler();
+            syscall_handler(f);
             break;
 
         default:
@@ -91,9 +98,4 @@ void exc_handler(struct context *f)
 }
 
 
-void breakpoint(struct context *f)
-{
-    printf("Breakpoint at [%p]!\n", f->epc);
-    f->epc += 2; //?
-}
 

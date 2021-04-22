@@ -71,15 +71,26 @@ static void printptr(uint64_t x)
     cons_puts(buf);
 }
 
-// Print to the console. only understands %d, %x, %p, %s.
 void printf(const char *fmt, ...)
 {
     va_list ap;
+    va_start(ap, fmt);
+    
+    vprintf(fmt, ap);
+
+    va_end(ap);
+}
+
+
+// Print to the console. only understands %d, %x, %p, %s.
+void vprintf(const char *fmt, va_list ap)
+{
+    //va_list ap;
     int cnt = 0, l = 0;
     char *a, *z, *s = (char *)fmt, str;
     //int f = stdout;
 
-    va_start(ap, fmt);
+    //va_start(ap, fmt);
     for (;;)
     {
         if (!*s)
@@ -121,5 +132,5 @@ void printf(const char *fmt, ...)
         }
         s += 2;
     }
-    va_end(ap);
+    //va_end(ap);
 }

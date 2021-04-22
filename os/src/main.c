@@ -3,6 +3,7 @@
 #include "include/stdio.h"
 #include "include/string.h"
 #include "include/timer.h"
+#include "include/assert.h"
 
 int i;
 extern uintptr_t skernel;
@@ -37,7 +38,10 @@ void main()
 	idt_init();
 	irq_enable();
 	asm volatile ("ebreak");
-	printf(" ? ");  //
+	printf(" ? \n");  //
+
+	panic("goodbye %d\n", 1);
+
 
 	//timer_init();
 	//printf(" ? ");

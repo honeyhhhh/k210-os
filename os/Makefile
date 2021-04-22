@@ -49,6 +49,8 @@ OBJS += \
   $S/timer.o \
   $S/exception.o \
   $S/exception_entry.o \
+  $S/panic.o \
+  $S/syscall.o
 
 #SRC1 := $(wildcard $S/*.c)
 #SRC2 := $(wildcard $S/*.S)
