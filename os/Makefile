@@ -85,5 +85,5 @@ debug: $(bin)
 
 
 clean:
-	-rm -i $S/*.o \
+	-rm -f $S/*.o \
 	$T/*
