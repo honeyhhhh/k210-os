@@ -22,6 +22,15 @@ void __panic(const char *file, int line, const char *fmt, ...)
     
 }
 
+void __warn(const char *file, int line, const char *fmt, ...)
+{
+    va_list ap;
+    va_start(ap, fmt);
+    printf("kernel warn at %s:%d:  ", file, line);
+    vprintf(fmt, ap);
+    printf("\n");
+    va_end(ap);
+}
 
 
 
