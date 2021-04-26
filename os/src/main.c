@@ -40,7 +40,7 @@ void main()
 	asm volatile ("ebreak");
 	printf(" ? \n");  //
 
-	panic("goodbye %d\n", 1);
+	warn("goodbye %d\n", 1);
 
 
 	//timer_init();
