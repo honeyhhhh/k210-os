@@ -28,8 +28,8 @@ typedef uintptr_t Pde;
 /* 根据物理地址得到页内偏移 */
 uintptr_t get_page_offset(PhysAddr pa);
 /* 页号和地址的相互转换 */
-void pa2pnn(PhysAddr pa, PhysPageNum *pnn);
-void pnn2pa(PhysPageNum pnn, PhysAddr *pa);
+void pa2ppn(PhysAddr pa, PhysPageNum *pnn);
+void ppn2pa(PhysPageNum pnn, PhysAddr *pa);
 void pa_floor(PhysAddr *pa);
 void pa_ceil(PhysAddr *pa);
 /* 取出虚拟页号的三级页索引 */
@@ -53,7 +53,7 @@ typedef uintptr_t PTEFlags;
 // 将相应页号和标志写入一个页表项
 Pte pte_new(PhysAddr, PTEFlags);
 // 获取页号、地址、标志位
-PhysPageNum pte_get_pnn();
+PhysPageNum pte_get_ppn();
 PhysAddr pte_get_pa();
 PTEFlags pte_get_flags();
 // 清空
@@ -71,22 +71,21 @@ Pte *get_pte_array();
 
 /* 页表(页表项数组) 抽象数据结构 */
 typedef struct PageTable {
-    PhysPageNum root_pnn;
+    PhysPageNum root_ppn;
     Pde *frames;
 }PageTable;
 void pt_new();
 Pte *find_pte_create();
 void map();
 void unmap();
-uintptr_t token();
 
 
 
-
+// 
 void mm_init();
-void heap_init();
-void frame_allocator_init();
-void page_activate();
+void heap_allocator_init();     // 给内核堆分配器 一块静态零初始化的字节数组 用于分配， 位于内核bss段
+void frame_allocator_init();    // 可用物理页帧管理器，[ekernel, MEMORY_END)
+void page_activate();           // 初始化satp，开启分页
 
 
 
