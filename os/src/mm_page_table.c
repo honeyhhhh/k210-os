@@ -28,7 +28,7 @@ Pte pte_new(PhysPageNum ppn, PTEFlags flags)
 // 获取页号、地址、标志位
 PhysPageNum pte_get_ppn(Pte pte)
 {
-    uint64_t t = (1 << 44) - 1;
+    uint64_t t = ((uint64_t)1 << 44) - 1;
     return pte & t;
 }
 PhysAddr pte_get_pa(Pte pte)
@@ -37,7 +37,7 @@ PhysAddr pte_get_pa(Pte pte)
 }
 PTEFlags pte_get_flags(Pte pte)
 {
-    return (uint8_t)(pte & 0x0FF)
+    return (uint8_t)(pte & 0x0FF);
 }
 // 清空
 void pte_empty(Pte *pte)
@@ -49,16 +49,16 @@ bool pte_is_valid(Pte pte)
 {
     return (pte_get_flags(pte) & PTE_V) != 0;
 }
-bool pte_readable()
+bool pte_readable(Pte pte)
 {
     return (pte_get_flags(pte) & PTE_R) != 0;
 }
-bool pte_writable()
+bool pte_writable(Pte pte)
 {
     return (pte_get_flags(pte) & PTE_W) != 0;
 
 }
-bool pte_excutable()
+bool pte_excutable(Pte pte)
 {
     return (pte_get_flags(pte) & PTE_X) != 0;
 }

@@ -46,13 +46,13 @@ void heap_removeMax(struct maxHeap* maxheap)
         panic("no elements in this maxheap !\n");
     }
     uint64_t t = maxheap->heapArray[0];
-    maxheap->heapArray[0] =  maxheap->heapArray[maxheap->CurrentSize - 1]
+    maxheap->heapArray[0] =  maxheap->heapArray[maxheap->CurrentSize - 1];
     maxheap->heapArray[maxheap->CurrentSize - 1] = t;
     maxheap->CurrentSize--;
 
     if (maxheap->CurrentSize > 1)
     {
-        heap_SiftDown(0);
+        heap_SiftDown(maxheap,0);
     }
 }
 //互斥操作
@@ -65,7 +65,7 @@ void heap_SiftUp(struct maxHeap* maxheap, int pos)//从pos向上开始调整，�
         maxheap->heapArray[temppos] = maxheap->heapArray[heap_parent(temppos)];
         temppos = heap_parent(temppos);
     }
-    heapArray[temppos] = temp;
+    maxheap->heapArray[temppos] = temp;
 }
 void heap_SiftDown(struct maxHeap* maxheap, int pos)//筛选法函数，pos表示开始处理的数组下标
 {
@@ -96,5 +96,5 @@ uint64_t heap_top(struct maxHeap* maxheap)
 
 void heap_destory(struct maxHeap* maxheap)
 {
-    
+
 }

@@ -4,6 +4,7 @@
 #include "include/string.h"
 #include "include/timer.h"
 #include "include/assert.h"
+#include "include/mm.h"
 
 int i;
 extern uintptr_t skernel;
@@ -40,7 +41,11 @@ void main()
 	asm volatile ("ebreak");
 	printf(" ? \n");  //
 
-	warn("goodbye %d\n", 1);
+	
+
+	mm_init();
+
+	panic("goodbye %d\n", 1);
 
 
 	//timer_init();

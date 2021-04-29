@@ -50,7 +50,10 @@ OBJS += \
   $S/exception.o \
   $S/exception_entry.o \
   $S/panic.o \
-  $S/syscall.o
+  $S/syscall.o \
+  $S/max_heap.o \
+  $S/mm_frame_allocator.o \
+  $S/mm_page_table.o
 
 #SRC1 := $(wildcard $S/*.c)
 #SRC2 := $(wildcard $S/*.S)

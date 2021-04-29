@@ -8,8 +8,8 @@
 
 #define RUSTSBI_BASE 0x80000000L
 extern uintptr_t skernel;   //0x80200000L
-const uint64_t KERNEL_HEAP_SIZE = 4096 * 32;
-const uint64_t KERNEL_STACK_SIZE = 4096 * 4;
+#define KERNEL_HEAP_SIZE = (4096 * 32)ULL;
+#define KERNEL_STACK_SIZE = (4096 * 4)ULL;
 extern uintptr_t ekernel;
 #define MEMORY_END 0x80800000L
 // [ekernel, MEMORY_END)
@@ -39,6 +39,23 @@ static inline bool is_aligned(uintptr_t a)
 {
     return get_offset(a) == 0;
 }
+// floor向下 ceil向上
+static inline PhysPageNum pa_floor(PhysAddr pa)
+{
+    return pa / PAGE_SIZE;
+}
+static inline PhysPageNum pa_ceil(PhysAddr pa)
+{
+    return (pa + PAGE_SIZE - 1) / PAGE_SIZE;
+}
+static inline VirtPageNum va_floor(VirtAddr va)
+{
+    return pa_floor((PhysAddr)va);
+}
+static inline VirtPageNum va_ceil(VirtAddr va)
+{
+    return pa_ceil((PhysAddr)va);
+}
 /* 页号和地址的相互转换 */
 static inline PhysPageNum pa2ppn(PhysAddr pa)
 {
@@ -51,29 +68,13 @@ static inline PhysAddr ppn2pa(PhysPageNum pnn)
 }
 static inline VirtPageNum va2vpn(VirtAddr va)
 {
-    return pa2ppn(PhysAddr(va));
+    return pa2ppn((PhysAddr)va);
 }
 static inline VirtAddr vpn2va(VirtPageNum vpn)
 {
-    return ppn2pa(PhysPageNum(vpn));
+    return ppn2pa((PhysPageNum)vpn);
 }
-// floor向下 ceil向上
-static inline PhysPageNum pa_floor(PhysAddr pa)
-{
-    return pa / PAGE_SIZE;
-}
-static inline PhysPageNum pa_ceil(PhysAddr pa)
-{
-    return (pa + PAGE_SIZE - 1) / PAGE_SIZE;
-}
-static inline VirtPageNum va_floor(VirtAddr va)
-{
-    return pa_floor(PhysAddr(va));
-}
-static inline VirtPageNum va_ceil(VirtAddr va)
-{
-    return pa_ceil(PhysAddr(va));
-}
+
 
 
 /* 取出虚拟页号的三级页索引 高到低 */
@@ -119,20 +120,14 @@ typedef struct PageTable {
     PhysPageNum root_ppn;
     Pde *frames;
 }PageTable;
-void pt_new();
-Pte *find_pte_create();
-void map();
-void unmap();
+//void pt_new();
+//Pte *find_pte_create();
+//void map();
+//void unmap();
 
 
 
-// 
-static inline void mm_init()
-{
-    heap_allocator_init();
-    frame_allocator_init();
-    page_activate();
-}
+
 /* 最大堆式物理页帧分配器，相比于栈式更容易分配连续的页  */
 /* 伙伴系统分配算法也容易分配连续物理地址的页框，但是 */
 struct FrameAllocator
@@ -146,12 +141,19 @@ struct Heap_Allocator
 {
 
 };
-extern struct FrameAllocator FRAMEALLOCATOR;
+extern struct FrameAllocator FRAME_ALLOCATOR;
 
-void heap_allocator_init();     // 给内核堆分配器 一块静态零初始化的字节数组 用于分配， 位于内核bss段
+//void heap_allocator_init();     // 给内核堆分配器 一块静态零初始化的字节数组 用于分配， 位于内核bss段
 void frame_allocator_init();    // 可用物理页帧管理器，[ekernel, MEMORY_END)
-void page_activate();           // 初始化satp，开启分页
+//void page_activate();           // 初始化satp，开启分页
 
+// 
+static inline void mm_init()
+{
+    //heap_allocator_init();
+    frame_allocator_init();
+    //page_activate();
+}
 
 
 

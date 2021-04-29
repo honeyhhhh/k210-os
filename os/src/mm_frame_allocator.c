@@ -8,10 +8,10 @@ static void _frame_allocator_init(PhysPageNum l, PhysPageNum r)
 {
     FRAME_ALLOCATOR.current = l;
     FRAME_ALLOCATOR.end = r;
-    printf("remain %d Phys Frames \n", FRAMEALLOCATOR.current - FRAMEALLOCATOR.end);
+    printf("remain %d Phys Frames \n", FRAME_ALLOCATOR.current - FRAME_ALLOCATOR.end);
 }
 
 void frame_allocator_init()
 {
-    _frame_allocator_init(pa2ppn(pa_ceil(&ekernel)), pa2ppn(pa_floor(MEMORY_END)));
+    _frame_allocator_init(pa2ppn(pa_ceil((PhysAddr)&ekernel)), pa2ppn(pa_floor((PhysAddr)MEMORY_END)));
 }
