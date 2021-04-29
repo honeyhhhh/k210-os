@@ -8,7 +8,7 @@ static void _frame_allocator_init(PhysPageNum l, PhysPageNum r)
 {
     FRAME_ALLOCATOR.current = l;
     FRAME_ALLOCATOR.end = r;
-    printf("remain %d Phys Frames \n", FRAME_ALLOCATOR.current - FRAME_ALLOCATOR.end);
+    printf("remain %d Phys Frames \n", FRAME_ALLOCATOR.end - FRAME_ALLOCATOR.current);
 }
 
 void frame_allocator_init()
