@@ -7,12 +7,6 @@ _start:
 
 halt:		j halt 
 
-	.section .data.kpt
-	.align 12
-	.global kernel_page_table_sv39
-kernel_page_table_sv39:
-	.zero 8 * 511
-
 
 	.section .bss.stack
 	.align 12

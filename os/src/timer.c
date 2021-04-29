@@ -3,8 +3,9 @@
 #include "include/sbi.h"
 #include "include/stdio.h"
 
-// QEMU_CLOCK_FREQ
-const uint64_t QEMU_CLOCK_FREQ = 10000000;
+// CLOCK_FREQ
+const uint64_t QEMU_CLOCK_FREQ = 12500000; //10000000;
+const uint64_t K210_CLOCK_FREQ = 403000000 / 62;
 // 1000ms = 1s
 const uint64_t MSEC_PER_SEC = 1000;
 // 时钟中断间隔

@@ -8,6 +8,8 @@
 
 #define RUSTSBI_BASE 0x80000000L
 extern uintptr_t skernel;   //0x80200000L
+const uint64_t KERNEL_HEAP_SIZE = 4096 * 32;
+const uint64_t KERNEL_STACK_SIZE = 4096 * 4;
 extern uintptr_t ekernel;
 #define MEMORY_END 0x80800000L
 // [ekernel, MEMORY_END)
@@ -140,6 +142,11 @@ struct FrameAllocator
     PhysPageNum end;
     struct maxHeap recycled;
 };
+struct Heap_Allocator
+{
+
+};
+extern struct FrameAllocator FRAMEALLOCATOR;
 
 void heap_allocator_init();     // 给内核堆分配器 一块静态零初始化的字节数组 用于分配， 位于内核bss段
 void frame_allocator_init();    // 可用物理页帧管理器，[ekernel, MEMORY_END)

@@ -7,8 +7,9 @@
 // 可以声明，也可以extern
 // 用static修饰一个变量或者函数时，表示该名字只能在文件内部使用，文件外部是看不到该名字的。不能使用extern
 
-// QEMU_CLOCK_FREQ
+// CLOCK_FREQ
 extern const uint64_t QEMU_CLOCK_FREQ;
+extern const uint64_t K210_CLOCK_FREQ;
 // 1000ms = 1s
 extern const uint64_t MSEC_PER_SEC;
 // 时钟中断间隔
