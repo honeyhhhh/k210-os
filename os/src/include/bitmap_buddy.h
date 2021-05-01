@@ -19,13 +19,14 @@ struct bitmap_buddy
 };
 
 struct bitmap_buddy* buddy_new(int size, void *bbase);
-void buddy_destroy(struct bitmap_buddy* b);
+void buddy_destroy(struct bitmap_buddy *b);
 
 int buddy_alloc(struct bitmap_buddy* b, int size);
 void buddy_free(struct bitmap_buddy* b, int offset);
 
-int buddy_size(struct bitmap_buddy* b, int offset);
-void buddy_dump(struct bitmap_buddy* b);
+uint64_t buddy_remain_size(struct bitmap_buddy *b);
+int buddy_size(struct bitmap_buddy *b, int offset);
+void buddy_dump(struct bitmap_buddy *b);
 
 
 

@@ -18,6 +18,31 @@ static uint32_t fixsize(unsigned size) {
     return size + 1;
 }
 
+/*判断bit_idx位是否为1，若为1，则返回true，否则返回false*/
+bool bitmap_scan_test(struct bitmap_buddy* btmp, uint32_t bit_idx)
+{
+    uint32_t byte_idx = bit_idx / 8;   //向下取整用于索引数组下标
+    uint32_t bit_odd = bit_idx % 8;   //取余用于索引数组内的位
+    return (btmp->bbt[byte_idx] & ((uint32_t)1 << bit_odd));
+}
+
+/*将位图btmp的bit_idx位置为value*/
+void bitmap_set(struct bitmap_buddy* btmp, uint32_t bit_idx, int8_t value)
+{
+    assert((value == 0) || (value == 1));
+    uint32_t byte_idx = bit_idx / 8;
+    uint32_t bit_odd = bit_idx % 8;
+
+    //一般都会用个0x1这样的数对字节中的位操作
+    //将1任意移动后再取反，或者先取反再移位，可用来对位置0操作
+    if(value) {
+        btmp->bbt[byte_idx] |= ((uint32_t)1 << bit_odd);
+    } else {
+        btmp->bbt[byte_idx] &= ~((uint32_t)1 << bit_odd);
+    }
+}
+
+
 
 // 给定下标，求结点所在层数，然后可求所在层 内存块大小
 static inline uint32_t get_size(uint32_t index)
@@ -139,5 +164,31 @@ void buddy_free(struct bitmap_buddy *b, int offset)
             b->bbt[index] = MAX(left_longest, right_longest);
     }
 }
+
+
+// 返回offset对应内存块大小
+int buddy_size(struct bitmap_buddy* self, int offset)
+{
+    uint32_t node_size, index = 0;
+
+    assert(self && offset >= 0 && offset < self->size);
+
+    node_size = 1;
+    for (index = offset + self->size - 1; self->bbt[index] ; index = PARENT(index))
+        node_size *= 2;
+
+    return node_size;
+}
+
+// 返回整个buddy剩余的内存块总和
+uint64_t buddy_remain_size(struct bitmap_buddy *b)
+{
+    assert(self);
+
+    uint64_t sum = 0;
+    
+
+}
+
 
 
