@@ -10,12 +10,13 @@
 struct maxHeap 
 {
     uint64_t *heapArray; //存放数据的数组，当前用于数据类型为物理页号
-    int CurrentSize;  //当前堆中元素个数，指向最后一层的最右边的元素的下一个位置
-    int MaxSize; //最大数目
+    uint64_t CurrentSize;  //当前堆中元素个数，指向最后一层的最右边的元素的下一个位置
+    uint64_t MaxSize; //最大数目
 };
 
 
-void heap_init(struct maxHeap* maxheap, void *base,const int n); // n ~ MaxSize
+void heap_init(struct maxHeap* maxheap, void *base,const uint64_t n); // n ~ MaxSize
+
 bool heap_empty(struct maxHeap* maxheap);   // 判断是否为空
 bool heap_leaf(struct maxHeap* maxheap, int pos);   //判断是否为叶节点
 int heap_lc(int pos);  //返回左孩子位置

@@ -4,14 +4,14 @@
 struct FrameAllocator FRAME_ALLOCATOR;
 
 
-static void _frame_allocator_init(PhysPageNum l, PhysPageNum r)
-{
-    FRAME_ALLOCATOR.current = l;
-    FRAME_ALLOCATOR.end = r;
-    printf("remain %d (%p ~ %p) Phys Frames \n", FRAME_ALLOCATOR.end - FRAME_ALLOCATOR.current, l , r);
-}
 
 void frame_allocator_init()
 {
-    _frame_allocator_init(pa_ceil((PhysAddr)&ekernel), pa_floor((PhysAddr)MEMORY_END));
+    FRAME_ALLOCATOR.current = pa_ceil((PhysAddr)&ekernel);
+    FRAME_ALLOCATOR.end = pa_floor((PhysAddr)MEMORY_END);
+    uint64_t page_nums = FRAME_ALLOCATOR.end - FRAME_ALLOCATOR.current;
+    printf("remain %d (%p ~ %p) Phys Frames \n", page_nums, FRAME_ALLOCATOR.current, FRAME_ALLOCATOR.end);
+
+    
+    heap_init(&FRAME_ALLOCATOR.recycled, , total_page_num);
 }

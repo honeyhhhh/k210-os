@@ -9,8 +9,12 @@
         "console.h": "c",
         "random": "cpp",
         "unistd.h": "c",
-        "mm.h": "c"
+        "mm.h": "c",
+        "array": "c",
+        "initializer_list": "c",
+        "utility": "c",
+        "max_heap.h": "c"
     },
-    "C_Cpp.errorSquiggles": "Disabled",
-    "C_Cpp.dimInactiveRegions": false
+    //"C_Cpp.errorSquiggles": "Disabled",
+    //"C_Cpp.dimInactiveRegions": false
 }

@@ -27,7 +27,6 @@ SECTIONS
     
     .data : {
         sdata = .;
-        *(.data.kpt)
         *(.data .data.*)
         . = ALIGN(4K);
         edata = .;
