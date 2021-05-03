@@ -52,6 +52,8 @@ OBJS += \
   $S/panic.o \
   $S/syscall.o \
   $S/max_heap.o \
+  $S/bitmap_buddy.o \
+  $S/mm_heap_allocator.o \
   $S/mm_frame_allocator.o \
   $S/mm_page_table.o
 

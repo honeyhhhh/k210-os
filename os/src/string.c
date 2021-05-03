@@ -37,12 +37,11 @@ int atoi(const char *s)
     return neg ? n : -n;
 }
 
-void *memset(void *dest, int c, size_t n)
+void *memset(void *dest, uint8_t c, size_t n)
 {
-    char *p = dest;
+    uint8_t *p = (uint8_t *)dest;
     for (int i = 0; i < n; ++i, *(p++) = c)
         ;
-    return dest;
 }
 
 

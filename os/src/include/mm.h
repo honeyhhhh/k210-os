@@ -139,7 +139,7 @@ struct FrameAllocator
     struct maxHeap recycled;
 };
 extern struct FrameAllocator FRAME_ALLOCATOR;
-extern struct bitmap_buddy HEAP_ALLOCATOR;
+extern struct bitmap_buddy *HEAP_ALLOCATOR;
 
 void heap_allocator_init();     // 给内核堆分配器 一块静态零初始化的字节数组 用于分配， 位于内核bss段
 void frame_allocator_init();    // 可用物理页帧管理器，[ekernel, MEMORY_END)

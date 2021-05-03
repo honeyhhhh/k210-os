@@ -6,7 +6,8 @@
 int isspace(int c);
 int isdigit(int c);
 int atoi(const char *s);
-void *memset(void *dest, int c, size_t n);
+void *memset(void *dest, uint8_t c, size_t n);
+
 int strcmp(const char *l, const char *r);
 size_t strlen(const char *);
 size_t strnlen(const char *s, size_t n);

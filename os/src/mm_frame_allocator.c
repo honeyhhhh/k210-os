@@ -12,6 +12,6 @@ void frame_allocator_init()
     uint64_t page_nums = FRAME_ALLOCATOR.end - FRAME_ALLOCATOR.current;
     printf("remain %d (%p ~ %p) Phys Frames \n", page_nums, FRAME_ALLOCATOR.current, FRAME_ALLOCATOR.end);
 
-    
-    heap_init(&FRAME_ALLOCATOR.recycled, , total_page_num);
+
+    //heap_init(&FRAME_ALLOCATOR.recycled, , total_page_num);
 }
