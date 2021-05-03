@@ -75,11 +75,11 @@ static uint32_t get_size(struct bitmap_buddy *b, uint32_t index)
         if (in_bitmap(b, PARENT(index)))  // 8字节层
         {
             if (bitmap_scan_test(b, index))
-                size = 8;
+                size = log2(8);
         }
         else    // 16字节层
         {
-            size = 8 * (bitmap_scan_test(b, LEFT_LEAF(index)) + bitmap_scan_test(b, RIGHT_LEAF))
+            size = log2(8 * (bitmap_scan_test(b, LEFT_LEAF(index)) + bitmap_scan_test(b, RIGHT_LEAF)));
         }
     }
     else
@@ -173,39 +173,11 @@ int buddy_alloc(struct bitmap_buddy* b, uint32_t size)
 
     for(node_size = b->size; node_size != size; node_size /= 2 ) 
     {
-        // 左 优先
-        // if (LEFT_LEAF(index) >= b->size/16 - 1 && node_size/2 == 16)
-        // {
-        //     if (bitmap_scan_test(b, LEFT_LEAF(index)) && (bitmap_scan_test(b, LEFT_LEAF(LEFT_LEAF(index))) || bitmap_scan_test(LEFT_LEAF(RIGHT_LEAF(index)))))
-        //         index = LEFT_LEAF(index);
-        //     else if (bitmap_scan_test(b, RIGHT_LEAF(index)))
-        //         index = RIGHT_LEAF(index)
-        //     else
-        //         panic("unknow panic !\n");
-        // }
-        // else if (LEFT_LEAF(index) >= b->size/16 - 1 && node_size/2 == 8)
-        // {
-        //     if (bitmap_scan_test(b, LEFT_LEAF(index)))
-        //         index = LEFT_LEAF(index);
-        //     else if (bitmap_scan_test(b, RIGHT_LEAF(index)))
-        //         index = RIGHT_LEAF(index)
-        //     else
-        //         panic("unknow panic !\n");            
-        // }
-        // else
-        // {
-        //     if (b->bbt[LEFT_LEAF(index)] >= size)
-        //         index = LEFT_LEAF(index);
-        //     else
-        //         index = RIGHT_LEAF(index);
-        // }
 
         if (get_size(b, LEFT_LEAF(index)) >= size)
             index = LEFT_LEAF(index);
         else
             index = RIGHT_LEAF(index);        
-
-
     }
 
     
@@ -269,26 +241,7 @@ void buddy_free(struct bitmap_buddy *b, uint64_t offset)
         index = PARENT(index);
         node_size*=2;
     }
-    // if (bitmap_scan_test(b, index) == 0)
-    // {
-    //     bitmap_set(b, index, 1);
-    // }
-    // else if (bitmap_scan_test(b, PARENT(index)) == 0)
-    // {
-    //     index = PARENT(index);
-    //     node_size *= 2;
-    //     bitmap_set(b, index, 1);
-    // }
-    // else
-    // {
-    //     for (; b->bbt[index] ; index = PARENT(index)) 
-    //     {
-    //         node_size *= 2;
-    //         if (index == 0)
-    //             panic("unknow fault in free!\n");
-    //     }
-    //     b->bbt[index] = node_size;
-    // }
+
     for (; get_size(b, index) ; index = PARENT(index))
     {
         node_size *= 2;
@@ -352,6 +305,11 @@ int buddy_size(struct bitmap_buddy* self, uint64_t offset)
     return node_size;
 }
 
+static inline idx_illegal(struct bitmap_buddy *b, uint32_t index)
+{
+    return index < b->size/4 - 1;
+}
+
 // 返回整个buddy剩余的内存块总和
 uint64_t buddy_remain_size(struct bitmap_buddy *b)
 {
@@ -361,12 +319,22 @@ uint64_t buddy_remain_size(struct bitmap_buddy *b)
 
     // 深度遍历   累加叶节点（0值结点的父亲或者叶节点）
     // 当一个结点为0，那么的父亲的值要么为它的兄弟结点，要么为0， 并且不用再遍历以它父亲为根的子树
+    uint32_t astack[50];
+    astack[0] = -1;
+    int sp = 1;
+
+    while (index != -1)
+    {
+        if (idx_illegal(b, RIGHT_LEAF(index)))
+        {
+            astack[sp] = RIGHT_LEAF(index);
+            sp++;
+        }
+
+        if (idx_illegal(b, ))
+        
+    }
     
-
-
-
-
-
     return sum;
 
 }
