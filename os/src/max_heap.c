@@ -103,3 +103,13 @@ void heap_destory(struct maxHeap* maxheap)
 {
 
 }
+
+bool is_some(struct maxHeap *m, uint64_t ppn)
+{
+    for (int i = 0; i < m->CurrentSize; i++)
+    {
+        if (m->heapArray[i] == ppn)
+            return 1;
+    }
+    return 0;
+}

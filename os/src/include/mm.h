@@ -8,15 +8,14 @@
 #include "bitmap_buddy.h"
 
 #define RUSTSBI_BASE 0x80000000L
-extern uintptr_t skernel;   //0x80200000L
-#define KERNEL_HEAP_SIZE (4096*32)
-#define KERNEL_STACK_SIZE (4096*4)
+extern uintptr_t skernel; //0x80200000L
+#define KERNEL_HEAP_SIZE (4096 * 32)
+#define KERNEL_STACK_SIZE (4096 * 4)
 extern uintptr_t ekernel;
 #define MEMORY_END 0x80800000L
 // [ekernel, MEMORY_END)
 #define PAGE_SIZE 4096L
 #define PAGE_OFFSET_BITS 12L
-
 
 /* 地址和页号 */
 typedef uintptr_t PhysAddr;
@@ -27,9 +26,8 @@ typedef uintptr_t VirtPageNum;
 /* 页表基地址 */
 #define SATP_MODE 0xF000000000000000
 #define SATP_ASID 0x0FFFF00000000000
-#define SATP_PPN  0x00000FFFFFFFFFFF
+#define SATP_PPN 0x00000FFFFFFFFFFF
 typedef uintptr_t Pde;
-
 
 /* 根据地址得到页内偏移，判断是否4K对齐 */
 static inline uintptr_t get_offset(uintptr_t a)
@@ -76,26 +74,20 @@ static inline VirtAddr vpn2va(VirtPageNum vpn)
     return ppn2pa((PhysPageNum)vpn);
 }
 
-
-
 /* 取出虚拟页号的三级页索引 高到低 */
 void vpn_indexes(VirtPageNum vpn, uintptr_t *index3);
-
-
-
-
 
 /* 页表项 抽象数据结构 */
 typedef uintptr_t Pte;
 typedef uint8_t PTEFlags;
-#define PTE_V     0x001 // Valid
-#define PTE_R     0x002 // Read
-#define PTE_W     0x004 // Write
-#define PTE_X     0x008 // Execute
-#define PTE_U     0x010 // User
-#define PTE_G     0x020 // Global
-#define PTE_A     0x040 // Accessed
-#define PTE_D     0x080 // Dirty
+#define PTE_V 0x001 // Valid
+#define PTE_R 0x002 // Read
+#define PTE_W 0x004 // Write
+#define PTE_X 0x008 // Execute
+#define PTE_U 0x010 // User
+#define PTE_G 0x020 // Global
+#define PTE_A 0x040 // Accessed
+#define PTE_D 0x080 // Dirty
 //#define PTE_RSW   0x300 // Reserved for Softwar
 // 将相应页号和标志写入一个页表项
 Pte pte_new(PhysAddr, PTEFlags);
@@ -113,21 +105,16 @@ int pte_excutable();
 /* 通过pnn返回页表项数组 , 用于根据当前页索引找到页表项 */
 Pte *get_pte_array(PhysPageNum ppn);
 
-
-
-
 /* 页表(页表项数组) 抽象数据结构 */
-typedef struct PageTable {
+typedef struct PageTable
+{
     PhysPageNum root_ppn;
     Pde *frames;
-}PageTable;
+} PageTable;
 //void pt_new();
 //Pte *find_pte_create();
 //void map();
 //void unmap();
-
-
-
 
 /* 最大堆式物理页帧分配器，相比于栈式更容易分配连续的页  */
 /* 伙伴系统分配算法也容易分配连续物理地址的页框，但是 */
@@ -138,14 +125,15 @@ struct FrameAllocator
     PhysPageNum end;
     struct maxHeap recycled;
 };
+
 extern struct FrameAllocator FRAME_ALLOCATOR;
 extern struct bitmap_buddy *HEAP_ALLOCATOR;
 
-void heap_allocator_init();     // 给内核堆分配器 一块静态零初始化的字节数组 用于分配， 位于内核bss段
-void frame_allocator_init();    // 可用物理页帧管理器，[ekernel, MEMORY_END)
+void heap_allocator_init();  // 给内核堆分配器 一块静态零初始化的字节数组 用于分配， 位于内核bss段
+void frame_allocator_init(); // 可用物理页帧管理器，[ekernel, MEMORY_END)
 //void page_activate();           // 初始化satp，开启分页
 
-// 
+//
 static inline void mm_init()
 {
     heap_allocator_init();
@@ -153,13 +141,7 @@ static inline void mm_init()
     //page_activate();
 }
 
-
-
-
-
-
+PhysPageNum frame_alloc(struct FrameAllocator *self);
+void frame_dealloc(struct FrameAllocator *self, PhysPageNum ppn);
 
 #endif
-
-
-

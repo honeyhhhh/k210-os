@@ -17,3 +17,30 @@ void frame_allocator_init()
 
     printf("%p\n", FRAME_ALLOCATOR.recycled.heapArray);
 }
+
+PhysPageNum frame_alloc(struct FrameAllocator *self)
+{
+    if (!heap_empty(self->recycled.heapArray))
+    {
+        return (PhysPageNum)heap_top(self->recycled.heapArray);
+    }
+    else
+    {
+        if (self->current == self->end)
+        {
+            panic("no frame to alloc !\n");
+        }
+        else
+        {
+            self->current++;
+            return self->current - 1;
+        }
+    }
+}
+
+void frame_dealloc(struct FrameAllocator *self, PhysPageNum ppn)
+{
+    if ((uint64_t)ppn >= self->current || is_some(self, (uint64_t)ppn))
+        panic("Frame ppn={%p} has not been allocated!", ppn);
+    heap_insert(self, (uint64_t)ppn);
+}

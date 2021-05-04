@@ -32,6 +32,7 @@ uint64_t heap_top(struct maxHeap* maxheap);
 
 
 void heap_destory(struct maxHeap* maxheap);
+bool is_some(struct maxHeap *m, uint64_t ppn);
 
 
 #endif
