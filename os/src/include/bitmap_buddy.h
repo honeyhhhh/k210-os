@@ -12,7 +12,7 @@
 // 但是很难通过01计算得到结点真实值
 
 // 将最后两层 即8、16字节层使用bitmap
-// 这样将占用 (n/16-1)字节 + (n/8)/8字节  ≈  n/10
+// 这样将占用 (n/16-1)字节 + (n/8 + n/16)/8字节  ≈  n/10
 
 
 
@@ -29,7 +29,7 @@ struct bitmap_buddy
 struct bitmap_buddy* buddy_new(int size, void *bbase);
 //void buddy_destroy(struct bitmap_buddy *b);
 
-int buddy_alloc(struct bitmap_buddy* b, uint32_t size);
+void *buddy_alloc(struct bitmap_buddy* b, uint32_t size);
 void buddy_free(struct bitmap_buddy* b, uint64_t offset);
 
 uint64_t buddy_remain_size(struct bitmap_buddy *b);

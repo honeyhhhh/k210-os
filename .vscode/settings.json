@@ -13,7 +13,8 @@
         "array": "c",
         "initializer_list": "c",
         "utility": "c",
-        "max_heap.h": "c"
+        "max_heap.h": "c",
+        "cmath": "c"
     },
     //"C_Cpp.errorSquiggles": "Disabled",
     //"C_Cpp.dimInactiveRegions": false
