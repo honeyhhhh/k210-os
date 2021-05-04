@@ -13,5 +13,7 @@ void frame_allocator_init()
     printf("remain %d (%p ~ %p) Phys Frames \n", page_nums, FRAME_ALLOCATOR.current, FRAME_ALLOCATOR.end);
 
 
-    //heap_init(&FRAME_ALLOCATOR.recycled, , total_page_num);
+    heap_init(&FRAME_ALLOCATOR.recycled,  buddy_alloc(HEAP_ALLOCATOR, 8*page_nums), page_nums);
+
+    printf("%p\n", FRAME_ALLOCATOR.recycled.heapArray);
 }

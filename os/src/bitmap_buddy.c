@@ -90,14 +90,17 @@ static uint32_t get_size(struct bitmap_buddy *b, uint32_t index)
         }
         else    // 16字节层
         {
-            bool l = bitmap_scan_test(b, LEFT_LEAF(index));
-            bool r = bitmap_scan_test(b, RIGHT_LEAF(index));
-            if (l&&r)
-                size = log2(16);
-            else if (l||r)
-                size = log2(8);
-            else
-                size = 0;
+            if (bitmap_scan_test(b, index))  //为0
+            {
+                bool l = bitmap_scan_test(b, LEFT_LEAF(index));
+                bool r = bitmap_scan_test(b, RIGHT_LEAF(index));
+                if (l&&r)
+                    size = log2(16);
+                else if (l||r)
+                    size = log2(8);
+                else
+                    size = 0;
+            }
         }
     }
     else
@@ -130,19 +133,19 @@ struct bitmap_buddy* buddy_new(int size, void *bbase)
         if (IS_POWER_OF_2(i+1))  //树的层次，逐层减一倍
         {
             node_size /= 2;
-            printf("&bbt[%d]:[%p]-[%d] \n",i, &self->bbt[i], node_size);
+            //printf("&bbt[%d]:[%p]-[%d] \n",i, &self->bbt[i], node_size);
 
             if (node_size == 16)
                 break;
         }
         self->bbt[i] = log2(node_size);
     }
-    printf("&bbt[%d]:[%p]-[%d] \n",i-1, &self->bbt[i-1], self->bbt[i-1]);
-    printf("&bbt[%d]:[%p]-[%d] \n",4094, &self->bbt[4094], self->bbt[4094]);
+    //printf("&bbt[%d]:[%p]-[%d] \n",i-1, &self->bbt[i-1], self->bbt[i-1]);
+    //printf("&bbt[%d]:[%p]-[%d] \n",4094, &self->bbt[4094], self->bbt[4094]);
 
-    printf("&bbt[%d]:[%p]-[%d] \n",4095, &self->bbt[4095], self->bbt[4095]);
+    //printf("&bbt[%d]:[%p]-[%d] \n",4095, &self->bbt[4095], self->bbt[4095]);
 
-    printf("&bbt[%d]:[%p]-[%d] \n",i, &self->bbt[i], self->bbt[i]);
+    //printf("&bbt[%d]:[%p]-[%d] \n",i, &self->bbt[i], self->bbt[i]);
 
 
     // 假设管理16字节，则结点数 2*16 - 1 = 31个，即31位 = 3字节+7位
@@ -154,7 +157,7 @@ struct bitmap_buddy* buddy_new(int size, void *bbase)
     printf("bit nums: [%d]k bits\n", bit_node_size/1024); //
     memset(&self->bbt[i], UCHAR_MAX, bit_node_size/8);
     printf("base %p of %d k byte's bit set 1\n", &self->bbt[i], bit_node_size/8/1024);
-    printf("b->size/16 - 1:[%d]\n", self->size/16-1);
+    //printf("b->size/16 - 1:[%d]\n", self->size/16-1);
  
 
     return self;
@@ -176,9 +179,10 @@ void *buddy_alloc(struct bitmap_buddy* b, uint32_t size)
     else if (!IS_POWER_OF_2(size))
         size = fixsize(size);
 
-    // 根节点仅仅表示可分配的最大的块，并不表示所有块总和， 总和为所有上层节点不为0的叶结点的和
-    if (b->bbt[0] < size)  
+    // 根节点仅仅表示可分配的最大的块，并不表示所有块总和， 总和需要计算已分配的空间
+    if (pow2(b->bbt[0]) < size)  
     {
+        printf("no space !\n");
         return NULL;
     }
     printf("alloc %d byte\n", size);
@@ -223,9 +227,9 @@ void *buddy_alloc(struct bitmap_buddy* b, uint32_t size)
             index = PARENT(index);
             if (in_bitmap(b, index))
             {
-                uint8_t left = bitmap_scan_test(b, LEFT_LEAF(index));
-                uint8_t right = bitmap_scan_test(b, RIGHT_LEAF(index));
-                printf("%d:%d %d:%d\n",LEFT_LEAF(index) ,left, RIGHT_LEAF(index),right);
+                uint8_t left = bitmap_scan_test(b, LEFT_LEAF(index)) > 0 ? 1:0;
+                uint8_t right = bitmap_scan_test(b, RIGHT_LEAF(index)) > 0 ? 1:0;
+                //printf("%d:%d %d:%d\n",LEFT_LEAF(index) ,left, RIGHT_LEAF(index),right);
                 if (left|right)
                     bitmap_set(b, index, 1);
                 else
@@ -233,9 +237,9 @@ void *buddy_alloc(struct bitmap_buddy* b, uint32_t size)
             }
             else
             {
-                printf("%d: %d %d : %d\n", LEFT_LEAF(index),get_size(b,LEFT_LEAF(index)), RIGHT_LEAF(index),get_size(b,RIGHT_LEAF(index)));
+                //printf("%d: %d %d : %d\n", LEFT_LEAF(index),get_size(b,LEFT_LEAF(index)), RIGHT_LEAF(index),get_size(b,RIGHT_LEAF(index)));
                 b->bbt[index] = MAX(get_size(b,LEFT_LEAF(index)), get_size(b,RIGHT_LEAF(index)));
-                printf("index %d: %d \n",index, b->bbt[index]);
+                //printf("index %d: %d \n",index, b->bbt[index]);
             }
         }
         else
@@ -248,15 +252,15 @@ void *buddy_alloc(struct bitmap_buddy* b, uint32_t size)
     return (void *)((uint64_t)b->space +  offset); //?
 }
 
-void buddy_free(struct bitmap_buddy *b, uint64_t offset) 
+void buddy_free(struct bitmap_buddy *b, void *ptr) 
 {
-    offset = offset - (uint64_t)b->space;
+    uint64_t offset = (uint64_t)ptr - (uint64_t)b->space;
     uint32_t node_size, index = 0;
     uint32_t left_longest, right_longest;
 
     assert(b && offset >= 0 && offset < b->size); //确保有效
 
-    // 反向回溯，从最后的节点开始一直往上找到为0的节点
+    // 反向回溯，从最后的节点开始一直往上找到为0的节点?  第一个为0的一定是，每一层都有自己的大小
     // 即当初分配块所适配的大小和位置
     // 将其恢复到原来满状态的值。
     // 继续向上回溯，检查是否存在合并的块，依据就是左右子树的值相加是否等于原空闲块满状态的大小，如果能够合并，就将父节点标记为相加的和
@@ -280,6 +284,8 @@ void buddy_free(struct bitmap_buddy *b, uint64_t offset)
     else
         b->bbt[index] = log2(node_size);
     
+    printf("free index %d size: %d\n", index, node_size);
+    
 
     // [index] 原本是0，已经设置成原来的大小
     while (index) 
@@ -287,6 +293,7 @@ void buddy_free(struct bitmap_buddy *b, uint64_t offset)
 
         index = PARENT(index);
         node_size *= 2;
+        //printf("init index %d size: %d\n", index, get_size(b, index));
 
         left_longest = get_size(b, LEFT_LEAF(index));
         right_longest = get_size(b, RIGHT_LEAF(index));
@@ -302,6 +309,8 @@ void buddy_free(struct bitmap_buddy *b, uint64_t offset)
             else
                 b->bbt[index] = MAX(left_longest, right_longest);
         }
+        //printf("free index %d size: %d\n", index, get_size(b, index));
+
     }
 
 }
@@ -316,7 +325,7 @@ int buddy_size(struct bitmap_buddy* self, uint64_t offset)
     assert(self && offset >= 0 && offset < self->size);
     
     // offset = (index + 1) * node_size - b->size;
-    // offset + self->size - 1 表示offset对应元素的最左叶节点，并且内存块大小为1
+    // offset + self->size - 1 表示offset对应元素的最左叶节点，并且内存块大小为1，一一对应
     node_size = 1;
     index = offset + self->size - 1;
     while (node_size != 8)
@@ -336,43 +345,62 @@ static inline bool idx_illegal(struct bitmap_buddy *b, uint32_t index)
 {
     return index < b->size/4 - 1;
 }
+static inline uint64_t get_size2(struct bitmap_buddy *b, uint32_t idx)
+{
+    uint64_t node_size = b->size;
+    while (idx)
+    {
+        node_size/=2;
+        idx = PARENT(idx);
+    }
+    return node_size;
+}
 
 // 返回整个buddy剩余的内存块总和
+// 在算法稳定后可以维护一个变量用来记录 已分配的控件
 uint64_t buddy_remain_size(struct bitmap_buddy *b)
 {
     assert(b);
-    uint64_t sum = 0;
+    uint64_t alloced = 0;
     uint32_t index = 0;
 
-    // 深度遍历   累加叶节点（0值结点的父亲或者叶节点）
-    // 当一个结点为0，那么的父亲的值要么为它的兄弟结点，要么为0， 并且不用再遍历以它父亲为根的子树
+    // 深度遍历   累加每条路径上第一个0值结点对应的值
+    // 当一个结点为0，那么的父亲的值要么为它的兄弟结点，要么为0
+    // 一个结点的值仅仅表示其管理区域可分配空间的最大值
     uint32_t astack[50];
     astack[0] = -1;
     int sp = 1;
 
     while (index != -1)
     {
-        if (idx_illegal(b, RIGHT_LEAF(index)) && get_size(b, LEFT_LEAF(index)))
+        if (get_size(b, index) == 0)
+        {
+            alloced += get_size2(b, index);
+            index = astack[sp-1];
+            sp-=1;
+            continue;
+        }
+
+        if (idx_illegal(b, RIGHT_LEAF(index)))
         {
             astack[sp] = RIGHT_LEAF(index);
             sp++;
         }
 
         
-        if (idx_illegal(b, LEFT_LEAF(index)) && get_size(b, LEFT_LEAF(index)))
+        if (idx_illegal(b, LEFT_LEAF(index)))
         {
             index = LEFT_LEAF(index);
         }
         else
         {
-            sum += pow2(get_size(b, index));
             index = astack[sp-1];
             sp-=1;
         }
         
     }
     
-    return sum;
+    return b->size - alloced;
 }
 
 
