@@ -65,7 +65,7 @@ void heap_SiftUp(struct maxHeap* maxheap, int pos)//从pos向上开始调整，�
 {
     int temppos = pos;
     uint64_t temp = maxheap->heapArray[temppos];
-    while (temppos > 0 && maxheap->heapArray[heap_parent(temppos)] > temp)
+    while (temppos > 0 && maxheap->heapArray[heap_parent(temppos)] < temp)
     {
         maxheap->heapArray[temppos] = maxheap->heapArray[heap_parent(temppos)];
         temppos = heap_parent(temppos);
@@ -80,10 +80,10 @@ void heap_SiftDown(struct maxHeap* maxheap, int pos)//筛选法函数，pos表�
     
     while (j < maxheap->CurrentSize)
     {
-        if (j < maxheap->CurrentSize-1 && maxheap->heapArray[j] > maxheap->heapArray[j+1]) {
+        if (j < maxheap->CurrentSize-1 && maxheap->heapArray[j] < maxheap->heapArray[j+1]) {
             j++;//j指向较小的子结点
         }
-        if (temp > maxheap->heapArray[j]) {
+        if (temp < maxheap->heapArray[j]) {
             maxheap->heapArray[i] = maxheap->heapArray[j];
             i = j;
             j = 2*j+1;//向下继续

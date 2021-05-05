@@ -4,7 +4,7 @@
 struct FrameAllocator FRAME_ALLOCATOR;
 
 
-
+void frame_test();
 void frame_allocator_init()
 {
     FRAME_ALLOCATOR.current = pa_ceil((PhysAddr)&ekernel);
@@ -15,14 +15,20 @@ void frame_allocator_init()
 
     heap_init(&FRAME_ALLOCATOR.recycled,  buddy_alloc(HEAP_ALLOCATOR, 8*page_nums), page_nums);
 
-    printf("%p\n", FRAME_ALLOCATOR.recycled.heapArray);
+    //printf("%p\n", FRAME_ALLOCATOR.recycled.heapArray);
+    // frame_test();
 }
 
 PhysPageNum frame_alloc(struct FrameAllocator *self)
 {
-    if (!heap_empty(self->recycled.heapArray))
+    if (!heap_empty(&self->recycled))
     {
-        return (PhysPageNum)heap_top(self->recycled.heapArray);
+        printf("frame alloc from maxheap!\n");
+        // PhysPageNum t = (PhysPageNum)heap_top(&self->recycled);
+        // heap_removeMax(&self->recycled);
+        PhysPageNum t = (PhysPageNum)self->recycled.heapArray[self->recycled.CurrentSize-1];
+        self->recycled.CurrentSize--;      
+        return t;
     }
     else
     {
@@ -32,6 +38,8 @@ PhysPageNum frame_alloc(struct FrameAllocator *self)
         }
         else
         {
+            printf("frame alloc from current!\n");
+
             self->current++;
             return self->current - 1;
         }
@@ -40,7 +48,45 @@ PhysPageNum frame_alloc(struct FrameAllocator *self)
 
 void frame_dealloc(struct FrameAllocator *self, PhysPageNum ppn)
 {
-    if ((uint64_t)ppn >= self->current || is_some(self, (uint64_t)ppn))
-        panic("Frame ppn={%p} has not been allocated!", ppn);
-    heap_insert(self, (uint64_t)ppn);
+    printf("free page :[%p]\n", ppn);
+    if ((uint64_t)ppn >= self->current || is_some(&self->recycled, (uint64_t)ppn))
+        panic("Frame ppn={%p} has not been allocated!\n", ppn);
+    heap_insert(&self->recycled, (uint64_t)ppn);
+
+    while (heap_top(&self->recycled) == (uint64_t)self->current - 1)
+    {
+        heap_removeMax(&self->recycled);
+        self->current--;
+    }
+
+}
+
+void frame_test()
+{
+    PhysPageNum p1 = frame_alloc(&FRAME_ALLOCATOR);
+    printf("alloc page p1 :[%p]\n", p1);
+    PhysPageNum p2 = frame_alloc(&FRAME_ALLOCATOR);
+    printf("alloc page p2 :[%p]\n", p2);
+    PhysPageNum p3 = frame_alloc(&FRAME_ALLOCATOR);
+    printf("alloc page p3 :[%p]\n", p3);
+    PhysPageNum p4 = frame_alloc(&FRAME_ALLOCATOR);
+    printf("alloc page p4 :[%p]\n", p4);
+    PhysPageNum p5 = frame_alloc(&FRAME_ALLOCATOR);
+    printf("alloc page p5 :[%p]\n", p5);
+    PhysPageNum p6 = frame_alloc(&FRAME_ALLOCATOR);
+    printf("alloc page p6 :[%p]\n", p6);
+
+    frame_dealloc(&FRAME_ALLOCATOR, p4);    
+    frame_dealloc(&FRAME_ALLOCATOR, p3);    
+    // frame_dealloc(&FRAME_ALLOCATOR, p6);    
+    frame_dealloc(&FRAME_ALLOCATOR, p5);    
+
+    PhysPageNum p7 = frame_alloc(&FRAME_ALLOCATOR);
+    printf("alloc page :[%p]\n", p7);
+    PhysPageNum p8 = frame_alloc(&FRAME_ALLOCATOR);
+    printf("alloc page :[%p]\n", p8);
+
+    // frame_dealloc(&FRAME_ALLOCATOR, p4);    
+
+
 }

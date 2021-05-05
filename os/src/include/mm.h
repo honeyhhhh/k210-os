@@ -105,16 +105,33 @@ int pte_excutable();
 /* 通过pnn返回页表项数组 , 用于根据当前页索引找到页表项 */
 Pte *get_pte_array(PhysPageNum ppn);
 
-/* 页表(页表项数组) 抽象数据结构 */
-typedef struct PageTable
+
+
+struct fvec
 {
-    PhysPageNum root_ppn;
-    Pde *frames;
-} PageTable;
-//void pt_new();
-//Pte *find_pte_create();
-//void map();
-//void unmap();
+    PhysPageNum ppn;
+    struct fvec *next;
+};
+void fvec_init(struct fvec **f, PhysPageNum root_pnn);
+void fvec_push(struct fvec *f, PhysPageNum pnn);
+void fvec_destory(struct fvec **f);
+
+/* 页表(页表项数组) 抽象数据结构 */
+struct PageTable
+{
+    PhysPageNum root_ppn; // 根节点
+    struct fvec *fnode;    // 包括根节点的所有页表结点的物理页帧,方便回收
+};
+void pt_new(struct PageTable *pt);
+//struct pageTable *from_token(uint64_t sapt);
+Pte *find_pte_create(struct PageTable *self, VirtPageNum vpn);
+Pte *find_pte(struct PageTable *self, VirtPageNum vpn);
+void map(struct PageTable *self, VirtPageNum vpn,PhysPageNum ppn, PTEFlags flags);
+void unmap(struct PageTable *self, VirtPageNum vpn);
+
+
+
+
 
 /* 最大堆式物理页帧分配器，相比于栈式更容易分配连续的页  */
 /* 伙伴系统分配算法也容易分配连续物理地址的页框，但是 */
