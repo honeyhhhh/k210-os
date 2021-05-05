@@ -17,6 +17,29 @@ extern uintptr_t ekernel;
 #define PAGE_SIZE 4096L
 #define PAGE_OFFSET_BITS 12L
 
+
+
+
+#define TRAMPOLINE (ULONG_MAX - PAGE_SIZE + 1)
+#define TRAP_CONTEXT (TRAMPOLINE - PAGE_SIZE)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* 地址和页号 */
 typedef uintptr_t PhysAddr;
 typedef uintptr_t PhysPageNum;
@@ -128,8 +151,18 @@ Pte *find_pte_create(struct PageTable *self, VirtPageNum vpn);
 Pte *find_pte(struct PageTable *self, VirtPageNum vpn);
 void map(struct PageTable *self, VirtPageNum vpn,PhysPageNum ppn, PTEFlags flags);
 void unmap(struct PageTable *self, VirtPageNum vpn);
+uint64_t token(struct PageTable *self);
 
+/* TLB: Flush all or one page from local TLB */
+static inline void flush_tlb_all(void)
+{
+	__asm__ __volatile__ ("sfence.vma" : : : "memory");
+}
 
+static inline void flush_tlb_page(uintptr_t addr) //va ?
+{
+	__asm__ __volatile__ ("sfence.vma %0" : : "r" (addr) : "memory");
+}
 
 
 
@@ -142,13 +175,90 @@ struct FrameAllocator
     PhysPageNum end;
     struct maxHeap recycled;
 };
+PhysPageNum frame_alloc(struct FrameAllocator *self);
+void frame_dealloc(struct FrameAllocator *self, PhysPageNum ppn);
+
 
 extern struct FrameAllocator FRAME_ALLOCATOR;
 extern struct bitmap_buddy *HEAP_ALLOCATOR;
 
 void heap_allocator_init();  // 给内核堆分配器 一块静态零初始化的字节数组 用于分配， 位于内核bss段
 void frame_allocator_init(); // 可用物理页帧管理器，[ekernel, MEMORY_END)
-//void page_activate();           // 初始化satp，开启分页
+
+
+
+
+
+/* 地址空间抽象： */
+// 逻辑段：一段连续地址的虚拟内存
+// 地址空间：一系列有关联的逻辑段
+#define Identical   0U
+#define Framed      1U
+typedef uint32_t MapType;
+typedef uint8_t MapPermission;
+#define VM_R         1U
+#define VM_W        2U
+#define VM_X         3U
+#define VM_U        4U
+struct MapArea
+{
+    MapType map_type;
+    MapPermission map_perm;
+};
+struct MemorySet
+{
+    struct PageTable page_table;
+
+};
+extern struct MemorySet KERNEL_SPACE;
+void page_activate();           // 初始化satp，开启分页
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 //
 static inline void mm_init()
@@ -158,7 +268,17 @@ static inline void mm_init()
     //page_activate();
 }
 
-PhysPageNum frame_alloc(struct FrameAllocator *self);
-void frame_dealloc(struct FrameAllocator *self, PhysPageNum ppn);
+
+
+
+
+
+
+
+
+
+
+
+
 
 #endif

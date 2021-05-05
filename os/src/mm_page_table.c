@@ -176,6 +176,13 @@ void unmap(struct PageTable *self, VirtPageNum vpn)
     pte_empty(pte);
 }
 
+uint64_t token(struct PageTable *self)
+{
+    // MODE 8表示SV39分页机制
+    return (uint64_t)8 << 60 | (uint64_t)self->root_ppn;
+}
+
+
 
 
 

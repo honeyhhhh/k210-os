@@ -55,7 +55,8 @@ OBJS += \
   $S/bitmap_buddy.o \
   $S/mm_heap_allocator.o \
   $S/mm_frame_allocator.o \
-  $S/mm_page_table.o
+  $S/mm_page_table.o \
+  $S/mm_memoryset.o
 
 #SRC1 := $(wildcard $S/*.c)
 #SRC2 := $(wildcard $S/*.S)
