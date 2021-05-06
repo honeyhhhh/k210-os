@@ -135,9 +135,9 @@ struct fvec
     PhysPageNum ppn;
     struct fvec *next;
 };
-void fvec_init(struct fvec **f, PhysPageNum root_pnn);
-void fvec_push(struct fvec *f, PhysPageNum pnn);
-void fvec_destory(struct fvec **f);
+// void fvec_init(struct fvec **f, PhysPageNum root_pnn);
+// void fvec_push(struct fvec *f, PhysPageNum pnn);
+// void fvec_destory(struct fvec **f);
 
 /* 页表(页表项数组) 抽象数据结构 */
 struct PageTable
@@ -192,18 +192,23 @@ void frame_allocator_init(); // 可用物理页帧管理器，[ekernel, MEMORY_E
 /* 地址空间抽象： */
 // 逻辑段：一段连续地址的虚拟内存
 // 地址空间：一系列有关联的逻辑段
-#define Identical   0U
-#define Framed      1U
+#define Identical   0
+#define Framed      1
 typedef uint32_t MapType;
 typedef uint8_t MapPermission;
-#define VM_R         1U
-#define VM_W        2U
-#define VM_X         3U
-#define VM_U        4U
+#define VM_R    (1<<1)
+#define VM_W    (1<<2)
+#define VM_X    (1<<3)
+#define VM_U    (1<<4)
 struct MapArea
 {
     MapType map_type;
     MapPermission map_perm;
+    VirtPageNum vm_start;
+    VirtPageNum vm_end;
+
+    struct 
+
 };
 struct MemorySet
 {
@@ -211,6 +216,7 @@ struct MemorySet
 
 };
 extern struct MemorySet KERNEL_SPACE;
+void new_kernel();
 void page_activate();           // 初始化satp，开启分页
 
 

@@ -96,6 +96,7 @@ void fvec_destory(struct fvec **f)
     {
         t = t->next;
         buddy_free(HEAP_ALLOCATOR, *f);
+        frame_dealloc(&FRAME_ALLOCATOR, (*f)->ppn);
         *f = t;
     }
     *f = NULL;
@@ -112,6 +113,10 @@ void pt_new(struct PageTable *pt)
     memset(p, 0, PAGE_SIZE);
     pt->root_ppn = frame;
     fvec_init(&pt->fnode, pt->root_ppn);
+}
+void pt_free(struct PageTable *pt)
+{
+    fvec_destory(pt);
 }
 //struct pageTable *from_token(uint64_t sapt);
 Pte *find_pte_create(struct PageTable *self, VirtPageNum vpn)

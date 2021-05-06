@@ -45,18 +45,14 @@ typedef __builtin_va_list va_list;
 
 
 
-struct list_head {
-	struct list_head *next, *prev;
-};
-
-
 typedef struct
 {
     uint64_t sec;  // 自 Unix 纪元起的秒数
     uint64_t usec; // 微秒数
 } TimeVal;
 
-
+#define false 0
+#define true  1
 
 
 

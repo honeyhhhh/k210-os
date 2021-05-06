@@ -32,7 +32,7 @@ SECTIONS
         edata = .;
     }
 
-
+    sbss_with_stack = .;
     .bss : {
         *(.bss.stack)
         sbss = .;
