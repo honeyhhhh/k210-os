@@ -4,6 +4,7 @@
 #include "include/stdio.h"
 #include "include/timer.h"
 #include "include/syscall.h"
+#include "include/assert.h"
 
 extern void __saveall(void);
 extern void __restore(void);
@@ -46,6 +47,7 @@ static inline void exception_dispatch(struct context *f)
     {
         cons_puts("sync_exception\n");
         printf("E code :[%p]\n", f->cause);
+        printf("[%p]\n", f->epc);
         exc_handler(f);
     }
     

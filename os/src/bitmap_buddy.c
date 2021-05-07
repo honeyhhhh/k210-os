@@ -185,7 +185,7 @@ void *buddy_alloc(struct bitmap_buddy* b, uint32_t size)
         printf("no space !\n");
         return NULL;
     }
-    printf("alloc %d byte\n", size);
+    //printf("alloc %d byte\n", size);
     
 
     // 然后进行适配搜索，深度优先遍历,二叉搜索 ，当找到对应节点后，将其bbt标记为0
@@ -202,7 +202,7 @@ void *buddy_alloc(struct bitmap_buddy* b, uint32_t size)
         else
             index = RIGHT_LEAF(index);        
     }
-    printf("node_size :%d  index :%d\n", node_size, index);
+    //printf("node_size :%d  index :%d\n", node_size, index);
 
     
 
@@ -216,7 +216,7 @@ void *buddy_alloc(struct bitmap_buddy* b, uint32_t size)
     else
         b->bbt[index] = 0;
     offset = (index + 1) * node_size - b->size;
-    printf("space: %p  offset: %p\n", b->space, offset);
+    //printf("space: %p  offset: %p\n", b->space, offset);
 
 
     // 回溯，小块分配后 大块也需要分离，标记为左右子树最大值
@@ -284,7 +284,7 @@ void buddy_free(struct bitmap_buddy *b, void *ptr)
     else
         b->bbt[index] = log2(node_size);
     
-    printf("free index %d size: %d\n", index, node_size);
+    //printf("free index %d size: %d\n", index, node_size);
     
 
     // [index] 原本是0，已经设置成原来的大小

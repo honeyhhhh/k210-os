@@ -21,7 +21,8 @@
 
 
 #-------------------------------------------
-    .section .text
+    .section .text.trampoline
+
     .align 2
     .globl __saveall
 # 进入中断

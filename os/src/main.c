@@ -7,7 +7,7 @@
 #include "include/mm.h"
 
 int i;
-extern uintptr_t skernel;
+extern uintptr_t skernel[];
 extern uintptr_t stext;
 extern uintptr_t etext;
 extern uintptr_t srodata;
@@ -28,7 +28,7 @@ void main()
 
 	printf("%s", "hello, world!\n");
 	
-	printf("kernel_start : 		[%p]\n", &skernel);
+	printf("kernel_start : 		[%p]\n", skernel);
 	printf(".text : 		[%p ~ %p]\n", &stext, &etext);
 	printf(".rodata : 		[%p ~ %p]\n", &srodata, &erodata);
 	printf(".data : 		[%p ~ %p]\n", &sdata, &edata);

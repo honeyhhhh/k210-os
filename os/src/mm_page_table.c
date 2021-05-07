@@ -7,7 +7,7 @@
 inline void vpn_indexes(VirtPageNum vpn, uintptr_t *index3)
 {
     memset(index3, 0, 3*sizeof(uintptr_t));
-    for (int i = 2; i >= 0; i++)
+    for (int i = 2; i >= 0; i--)
     {
         index3[i] = vpn & 511;
         vpn >>= 9;
@@ -29,12 +29,14 @@ uint8_t *get_byte_array(PhysPageNum ppn) // 1字节粒度
 Pte pte_new(PhysPageNum ppn, PTEFlags flags)
 {
     uint64_t pte = (ppn << 10) | (uint64_t)flags;
+    //printf("ppn[%p] << 10 : [%p]\n",ppn,  ppn << 10);
+    return pte;
 }
 // 获取页号、地址、标志位
 PhysPageNum pte_get_ppn(Pte pte)
 {
     uint64_t t = ((uint64_t)1 << 44) - 1;
-    return pte & t;
+    return (pte >> 10) & t;
 }
 PhysAddr pte_get_pa(Pte pte)
 {
@@ -116,18 +118,20 @@ void pt_new(struct PageTable *pt)
 }
 void pt_free(struct PageTable *pt)
 {
-    fvec_destory(pt);
+    fvec_destory(&pt->fnode);
 }
 //struct pageTable *from_token(uint64_t sapt);
 Pte *find_pte_create(struct PageTable *self, VirtPageNum vpn)
 {
     uintptr_t idxs[3];
     vpn_indexes(vpn, idxs);
+    
     PhysPageNum ppn = self->root_ppn;
     Pte *result = NULL;
+    Pte *pte = NULL;
     for (int i = 0; i < 3; i++)
     {
-        Pte *pte = &get_pte_array(ppn)[idxs[i]];
+        pte = &get_pte_array(ppn)[idxs[i]];
         if (i == 2)
         {
             result = pte;
@@ -141,6 +145,7 @@ Pte *find_pte_create(struct PageTable *self, VirtPageNum vpn)
             *pte = pte_new(frame, PTE_V);
             fvec_push(self->fnode, frame);
         }
+
         ppn = pte_get_ppn(*pte);
     }
     return result;
@@ -150,11 +155,13 @@ Pte *find_pte(struct PageTable *self, VirtPageNum vpn)
 {
     uintptr_t idxs[3];
     vpn_indexes(vpn, idxs);
+    
     PhysPageNum ppn = self->root_ppn;
     Pte *result = NULL;
+    Pte *pte = NULL;
     for (int i = 0; i < 3; i++)
     {
-        Pte *pte = &get_pte_array(ppn)[idxs[i]];
+        pte = &get_pte_array(ppn)[idxs[i]];
         if (i == 2)
         {
             result = pte;
@@ -162,8 +169,10 @@ Pte *find_pte(struct PageTable *self, VirtPageNum vpn)
         }
         if (!pte_is_valid(*pte))
         {
+            printf("no found in pt !\n");
             return NULL;
         }
+
         ppn = pte_get_ppn(*pte);
     }
     return result;
@@ -171,8 +180,9 @@ Pte *find_pte(struct PageTable *self, VirtPageNum vpn)
 void map(struct PageTable *self, VirtPageNum vpn, PhysPageNum ppn, PTEFlags flags)
 {
     Pte *pte = find_pte_create(self, vpn);
-    assert(pte_is_valid(*pte));
+    assert(!pte_is_valid(*pte));
     *pte = pte_new(ppn, flags | PTE_V);
+    //printf("done ! [%p] -> [%p]  [%p]\n", vpn, *pte, pte_get_ppn(*pte));
 }
 void unmap(struct PageTable *self, VirtPageNum vpn)
 {

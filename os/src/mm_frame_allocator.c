@@ -23,7 +23,7 @@ PhysPageNum frame_alloc(struct FrameAllocator *self)
 {
     if (!heap_empty(&self->recycled))
     {
-        printf("frame alloc from maxheap!\n");
+        //printf("frame alloc from maxheap!\n");
         // PhysPageNum t = (PhysPageNum)heap_top(&self->recycled);
         // heap_removeMax(&self->recycled);
         PhysPageNum t = (PhysPageNum)self->recycled.heapArray[self->recycled.CurrentSize-1];
@@ -38,7 +38,7 @@ PhysPageNum frame_alloc(struct FrameAllocator *self)
         }
         else
         {
-            printf("frame alloc from current!\n");
+            //printf("frame alloc from current!\n");
 
             self->current++;
             return self->current - 1;
@@ -48,7 +48,7 @@ PhysPageNum frame_alloc(struct FrameAllocator *self)
 
 void frame_dealloc(struct FrameAllocator *self, PhysPageNum ppn)
 {
-    printf("free page :[%p]\n", ppn);
+    //printf("free page :[%p]\n", ppn);
     if ((uint64_t)ppn >= self->current || is_some(&self->recycled, (uint64_t)ppn))
         panic("Frame ppn={%p} has not been allocated!\n", ppn);
     heap_insert(&self->recycled, (uint64_t)ppn);
@@ -59,6 +59,11 @@ void frame_dealloc(struct FrameAllocator *self, PhysPageNum ppn)
         self->current--;
     }
 
+}
+
+uint64_t frame_remain_size(struct FrameAllocator *self)
+{
+    return self->end - self->current + self->recycled.CurrentSize;
 }
 
 void frame_test()

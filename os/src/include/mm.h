@@ -8,11 +8,11 @@
 #include "bitmap_buddy.h"
 
 #define RUSTSBI_BASE 0x80000000L
-extern uintptr_t skernel; //0x80200000L
+extern uintptr_t skernel[]; //0x80200000L
 #define KERNEL_HEAP_SIZE (4096 * 32)
 #define KERNEL_STACK_SIZE (4096 * 4)
 extern uintptr_t ekernel;
-#define MEMORY_END 0x80800000L
+#define MEMORY_END 0x80600000L
 // [ekernel, MEMORY_END)
 #define PAGE_SIZE 4096L
 #define PAGE_OFFSET_BITS 12L
@@ -81,7 +81,7 @@ static inline VirtPageNum va_ceil(VirtAddr va)
 /* 页号和地址的相互转换 */
 static inline PhysPageNum pa2ppn(PhysAddr pa)
 {
-    assert(get_offset(pa) != 0);
+    //assert(get_offset(pa) == 0);
     return pa_floor(pa);
 }
 static inline PhysAddr ppn2pa(PhysPageNum pnn)
@@ -115,16 +115,16 @@ typedef uint8_t PTEFlags;
 // 将相应页号和标志写入一个页表项
 Pte pte_new(PhysAddr, PTEFlags);
 // 获取页号、地址、标志位
-PhysPageNum pte_get_ppn();
-PhysAddr pte_get_pa();
-PTEFlags pte_get_flags();
+PhysPageNum pte_get_ppn(Pte pte);
+PhysAddr pte_get_pa(Pte pte);
+PTEFlags pte_get_flags(Pte pte);
 // 清空
-void pte_empty();
+void pte_empty(Pte *pte);
 // 判断V、R、W、X
-int pte_is_valid();
-int pte_readable();
-int pte_writable();
-int pte_excutable();
+int pte_is_valid(Pte pte);
+int pte_readable(Pte pte);
+int pte_writable(Pte pte);
+int pte_excutable(Pte pte);
 /* 通过pnn返回页表项数组 , 用于根据当前页索引找到页表项 */
 Pte *get_pte_array(PhysPageNum ppn);
 
@@ -177,6 +177,7 @@ struct FrameAllocator
 };
 PhysPageNum frame_alloc(struct FrameAllocator *self);
 void frame_dealloc(struct FrameAllocator *self, PhysPageNum ppn);
+uint64_t frame_remain_size(struct FrameAllocator *self);
 
 
 extern struct FrameAllocator FRAME_ALLOCATOR;
@@ -187,7 +188,23 @@ void frame_allocator_init(); // 可用物理页帧管理器，[ekernel, MEMORY_E
 
 
 
-
+#define K210_CLINT 0
+#define QEMU_PLIC  1
+#define K210_PLIC  2
+#define QEMU_UART0 3
+#define QEMU_VIRTIO0 4
+#define K210_UARTHS 5
+#define K210_GPIOHS 6
+#define K210_GPIO 7
+#define K210_SPI_SLAVE 8
+#define K210_FPIOA 9
+#define K210_TIMER0 10
+#define K210_TIMER1 11
+#define K210_TIMER2 12
+#define K210_SYSCTL 14
+#define K210_SPI0 15
+#define K210_SPI1 16
+#define K210_SPI2 17
 
 /* 地址空间抽象： */
 // 逻辑段：一段连续地址的虚拟内存
@@ -200,20 +217,31 @@ typedef uint8_t MapPermission;
 #define VM_W    (1<<2)
 #define VM_X    (1<<3)
 #define VM_U    (1<<4)
+
+struct vpmap
+{
+    VirtPageNum vpn;
+    PhysPageNum ppn;
+    struct vpmap *next;
+};
+
 struct MapArea
 {
     MapType map_type;
     MapPermission map_perm;
     VirtPageNum vm_start;
     VirtPageNum vm_end;
+    struct vpmap *dataframe;
 
-    struct 
+    struct MapArea *next;
 
 };
 struct MemorySet
 {
     struct PageTable page_table;
 
+    struct MapArea *head;
+    struct MapArea *tail;
 };
 extern struct MemorySet KERNEL_SPACE;
 void new_kernel();
@@ -271,7 +299,7 @@ static inline void mm_init()
 {
     heap_allocator_init();
     frame_allocator_init();
-    //page_activate();
+    page_activate();
 }
 
 
