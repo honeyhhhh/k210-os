@@ -129,6 +129,7 @@ static void ms_push(struct MemorySet *self, struct MapArea *map_area, uint8_t *d
 
 void ms_map_trampoline(struct MemorySet *self)
 {
+    // 并没有新增逻辑段 MemoryArea 而是直接在多级页表中插入一个从地址空间的最高虚拟页面映射到 跳板汇编代码所在的物理页帧的键值对，访问方式限制与代码段相同，即 RX 。
     map(&self->page_table, va2vpn(TRAMPOLINE), pa2ppn((PhysAddr)strampoline), PTE_R | PTE_X);
 }
 

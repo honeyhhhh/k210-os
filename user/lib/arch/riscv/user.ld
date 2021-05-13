@@ -1,22 +1,28 @@
 OUTPUT_ARCH(riscv)
 ENTRY(_start)
 
-SECTIONS {
+BASE_ADDRESS = 0x0;
 
-    .text : { 
+SECTIONS
+{
+    . = BASE_ADDRESS;
+    .text : {
         *(.text.entry)
         *(.text .text.*)
     }
-
-    .bss : { 
+    . = ALIGN(4K);
+    .rodata : {
+        *(.rodata .rodata.*)
+    }
+    . = ALIGN(4K);
+    .data : {
+        *(.data .data.*)
+    }
+    .bss : {
         *(.bss .bss.*)
-        *(.sbss .sbss.*)
     }
-
-    .data : { 
-        *(.data .rodata) 
-        *(.sdata .sdata.*)
+    /DISCARD/ : {
+        *(.eh_frame)
+        *(.debug*)
     }
-    
-    /DISCARD/ : { *(.eh_*) }
-}
+}}

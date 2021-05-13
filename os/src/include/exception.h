@@ -2,6 +2,7 @@
 #define _EXCEPT_H
 
 #include "stddef.h"
+#include "riscv_asm.h"
 
 struct regs {
     uintptr_t zero;  // Hard-wired zero     x0
@@ -47,20 +48,30 @@ struct context {
     uintptr_t epc; //sepc
     uintptr_t tval; //stval
     uintptr_t cause; //scause
+
+    // 在应用初始化的时候由内核写入应用地址空间中的 TrapContext 的相应位置，此后就不再被修改。
+    uintptr_t kernel_satp;  //内核地址空间的token
+    uintptr_t kernel_sp;       // 当前应用在内核地址空间中的内核栈栈顶的虚拟地址；
+    uintptr_t trap_handle;      // 入口虚拟地址
 };
 
 
 
 void irq_enable(void);
 void irq_disable(void);
+bool irq_get(void);
 
 void idt_init(void);
 
 static inline void exception_dispatch(struct context *f);
-struct context *e_dispatch(struct context *f);
+void e_dispatch();
 void irq_handler(struct context *f);
 void exc_handler(struct context *f);
 
+
+void set_sp(struct context *c, uintptr_t sp);
+
+struct context *app_context_init(uintptr_t entry, uintptr_t u_sp, uintptr_t k_satp, uintptr_t k_sp, uintptr_t trap_handle);
 
 
 #endif

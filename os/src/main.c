@@ -5,6 +5,7 @@
 #include "include/timer.h"
 #include "include/assert.h"
 #include "include/mm.h"
+#include "include/spinlock.h"
 
 int i;
 extern uintptr_t skernel[];
@@ -24,32 +25,44 @@ void main()
 {
 	memset(&sbss, 0, &ebss - &sbss); //清空bss段
 
+	//printf("%p\n", r_mhartid());
 
 
 	printf("%s", "hello, world!\n");
 	
-	printf("kernel_start : 		[%p]\n", skernel);
-	printf(".text : 		[%p ~ %p]\n", &stext, &etext);
+	printf("kernel_start : 		\033[31m[%p]\033[0m\n", skernel);
+	printf(".text : 		\033[31;43m[%p ~ %p]\033[0m\n", &stext, &etext);
 	printf(".rodata : 		[%p ~ %p]\n", &srodata, &erodata);
 	printf(".data : 		[%p ~ %p]\n", &sdata, &edata);
 	printf("boot_stack : 		[%p ~ %p]\n", &boot_stack, &boot_stack_top);
 	printf(".bss : 			[%p ~ %p]\n", &sbss, &ebss);
 	printf("kernel_end: 		[%p]\n", &ekernel);
 
+	mm_init();
+
 	idt_init();
 	irq_enable();
+
+
 	asm volatile ("ebreak");
 	printf(" ? \n");  //
 
-	
+	struct spinlock l1;
+	struct spinlock l2;
 
-	mm_init();
+	initlock(&l1, "l1");
 
-	panic("goodbye %d\n", 1);
+	acquire(&l1);
+	//release(&l1);
+	//acquire(&l1);
+	//panic("unreachable !\n");
+
 
 
 	//timer_init();
 	//printf(" ? ");
 	
+
+	panic("shoutdown !\n");
 	while(1) {}
 }

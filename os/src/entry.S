@@ -2,6 +2,7 @@
 	.global _start
 _start:
 
+	# csrr a1, mhartid
 	la sp, boot_stack_top
 	tail main
 
