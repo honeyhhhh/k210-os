@@ -1,19 +1,29 @@
-platform := qemu
+#platform := qemu
+platform := k210
 V := @
 T := target
 S := src
 O := objs
 FW := ../bootloader
-QEMU := qemu-system-riscv64
+QEMU := /opt/qemu/bin/qemu-system-riscv64
 GCCPREFIX := riscv64-unknown-elf-
 
 CC := $(GCCPREFIX)gcc
 LD := $(GCCPREFIX)ld
 
-CFLAGS := -mcmodel=medany -std=gnu99 -Wno-unused -Werror
-CFLAGS += -fno-builtin -nostdinc
-CFLAGS += -nostdlib -g
+CFLAGS = -Wall -Werror -O -fno-omit-frame-pointer -ggdb -g
+CFLAGS += -MD
+CFLAGS += -mcmodel=medany
+CFLAGS += -ffreestanding -fno-common -nostdlib -mno-relax
 CFLAGS += -I./include
+CFLAGS += $(shell $(CC) -fno-stack-protector -E -x c /dev/null >/dev/null 2>&1 && echo -fno-stack-protector)
+
+ifeq ($(platform), qemu)
+CFLAGS += -D QEMU
+endif
+ifeq ($(platform), qemu)
+CFLAGS += -D K210
+endif
 
 LDFLAGS	:= -nostdlib
 
@@ -26,10 +36,13 @@ bin := $T/kernel.bin
 opensbi_elf := $(FW)/fw_jump.elf
 opensbi_bin := $(FW)/fw_jump.bin
 
-
+ifeq ($(platform), k210)
+rustsbi_elf := $(FW)/rustsbi-k210
+rustsbi_bin := $(FW)/rustsbi-k210.bin
+else
 rustsbi_elf := $(FW)/rustsbi-qemu
 rustsbi_bin := $(FW)/rustsbi-qemu.bin
-
+endif
 
 
 
@@ -64,7 +77,13 @@ OBJS += \
 #OBJS1 := $(addprefix $O/, $(notdir $(patsubst %.c,%.o,$(SRC1))))
 #OBJS2 := $(addprefix $O/, $(notdir $(patsubst %.S,%.o,$(SRC2)))) 
 
+ifeq ($(platform), qemu)
 linker := $S/linker.ld
+endif
+ifeq ($(platform), k210)
+linker = $S/k210.ld
+endif
+
 
 
 kernel: $(OBJS) $(linker)
@@ -85,10 +104,32 @@ qemu: $(bin)
 
 debug: $(bin)
 	@tmux new-session -d \
-		"$(QEMU) -machine virt -nographic -bios $(opensbi_elf) -device loader,file=$(bin),addr=0x80200000 \
+		"$(QEMU) -machine virt -nographic -bios $(rustsbi_elf) -device loader,file=$(bin),addr=0x80200000 \
 		-s -S" && \
 		tmux split-window -h "$(GDB) -ex 'file $(kernel)' -ex 'set arch riscv:rv64' -ex 'target remote localhost:1234'" && \
 		tmux -2 attach-session -d
+
+
+
+k210-serialport := /dev/ttyUSB0
+ifndef CPUS
+CPUS := 2
+endif
+
+
+
+k210: $(bin)
+	@dd if=$(bin) of=$(rustsbi_bin) bs=128k seek=1
+	#@$(OBJDUMP) -D -b binary -m riscv $(rustsbi_bin) > $T/k210.asm
+	@sudo chmod 777 $(k210-serialport)
+	@python3 ./tools/kflash.py -p $(k210-serialport) -b 1500000 -t $(rustsbi_bin)
+
+
+
+
+
+
+
 
 
 clean:

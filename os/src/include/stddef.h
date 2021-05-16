@@ -28,7 +28,7 @@ typedef int64_t intptr_t;
 #define CHAR_MAX (0x7f)
 
 #define NPROC        16  // maximum number of processes
-#define NCPU          1  // maximum number of CPUs
+#define NCPU          2  // maximum number of CPUs
 
 /* point and address */
 typedef uintptr_t size_t;

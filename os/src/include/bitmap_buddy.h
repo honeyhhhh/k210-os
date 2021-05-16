@@ -2,6 +2,7 @@
 #define _BUDDY_H
 
 #include "stddef.h"
+#include "spinlock.h"
 
 // 假设管理的内存单元个数为n（字节）
 // 则二叉树结点为2n-1
@@ -20,6 +21,7 @@
 // 先设置 内核临时堆128KB ，该分配器需要占用11KB+
 struct bitmap_buddy
 {
+    struct spinlock lock;
     uintptr_t *space;
     uint64_t size;
     uint64_t min_alloc_size;

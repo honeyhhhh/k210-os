@@ -1,6 +1,7 @@
 #include "include/spinlock.h"
 #include "include/exception.h"
 #include "include/assert.h"
+#include "include/console.h"
 
 
 struct spinlock lock_locks;
@@ -61,12 +62,11 @@ bool holding(struct spinlock *lk)
 
 void acquire(struct spinlock *lk)
 {
-    warn("%s want to get lock!\n", lk->name);
+    //warn("%s want to get lock!\n", lk->name);
 
     // 1 disable interrupts to avoid deadlock.
     push_off();
     // 2 Check whether this cpu is holding the lock.
-
 
     // 3
     while(__sync_lock_test_and_set(&lk->locked, 1) != 0)
@@ -75,7 +75,7 @@ void acquire(struct spinlock *lk)
     // 4  mb()  fence 
     __sync_synchronize();
 
-    warn("%s get lock!\n", lk->name);
+    //warn("%s get lock!\n", lk->name);
 
     // 5 Record info about lock acquisition for holding() and debugging.
 
@@ -92,8 +92,7 @@ void release(struct spinlock *lk)
     // 4
     __sync_lock_release(&lk->locked);
 
-    warn("%s release lock!\n", lk->name);
-
+    //warn("%s release lock!\n", lk->name);
 
     // 5 enable ir
     pop_off();
@@ -101,7 +100,7 @@ void release(struct spinlock *lk)
 
 void push_off(void)
 {
-    int old = irq_get(); //是否开启中断
+    //int old = irq_get(); //是否开启中断
 
     irq_disable();
     // if(mycpu()->noff == 0)
@@ -118,5 +117,5 @@ void pop_off(void)
     //     panic("pop_off");
     // c->noff -= 1;
     // if(c->noff == 0 && c->intena)
-        irq_enable();
+    irq_enable();
 }

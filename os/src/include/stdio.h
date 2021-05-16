@@ -27,5 +27,6 @@ void putchar(int);
 int puts(const char *s);
 void printf(const char *fmt, ...);
 void vprintf(const char *fmt, va_list ap);
+void printinit();
 
 #endif // __STDIO_H__

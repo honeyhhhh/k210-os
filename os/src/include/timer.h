@@ -20,13 +20,12 @@ extern uint64_t TICKS;
 extern const uint64_t TICKS_PER_SEC;
 
 
-static inline uint64_t get_time(void);
-uint64_t get_time_ms(void);
-static inline uint64_t get_time_v2(void);
-static inline uint64_t get_cycle(void);
-void timer_init(void);
-void set_next_trigger(void);
 
+uint64_t get_time_ms();
+
+void timer_init();
+void set_next_trigger();
+void timer_handle();
 
 
 #endif

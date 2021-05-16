@@ -63,7 +63,7 @@ bool irq_get(void);
 
 void idt_init(void);
 
-static inline void exception_dispatch(struct context *f);
+
 void e_dispatch();
 void irq_handler(struct context *f);
 void exc_handler(struct context *f);

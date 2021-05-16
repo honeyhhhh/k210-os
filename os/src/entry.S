@@ -17,4 +17,8 @@ boot_stack:
 	.global boot_stack_top
 boot_stack_top:
 
+	.section .rodata
+	.global HEAP_ALLOCATOR
+HEAP_ALLOCATOR:
+
 

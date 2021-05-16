@@ -37,6 +37,7 @@ SECTIONS
     }
 
     sbss_with_stack = .;
+    _heap_allocator = .;
     .bss : {
         *(.bss.stack)
         sbss = .;

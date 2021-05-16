@@ -15,6 +15,7 @@
 #define SBI_REMOTE_SFENCE_VMA_ASID 7
 #define SBI_SHUTDOWN 8
 
+/*
 //#define SBI_ECALL(__num, __a0, __a1, __a2)                           \
 //({                                                                  \
 //    register unsigned long a0 asm("a0") = (unsigned long)(__a0);    \
@@ -35,7 +36,7 @@
 //#define SBI_PUTCHAR(__a0) SBI_ECALL_1(SBI_CONSOLE_PUTCHAR, __a0)
 //#define SBI_TIMER(__a0) SBI_ECALL_1(SBI_SET_TIMER, __a0)
 
-
+*/
 
 struct sbiret {
 	long error;
@@ -51,7 +52,7 @@ struct sbiret sbi_ecall(int ext, int fid, unsigned long arg0,
 void sbi_console_putchar(int ch);
 int sbi_console_getchar(void);
 void sbi_shutdown(void);
-
+void sbi_send_ipi(const unsigned long *hart_mask);
 
 void set_timer(uint64_t stime_value);
 

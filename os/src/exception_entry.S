@@ -28,7 +28,7 @@
 # 进入中断
 # 保存 Context 并且进入的中断处理函数
 __saveall:
-
+    
     # 判断是从内核态还是 用户态进入 中断
     # 原子操作交换sp和sscratch
     csrrw   sp, sscratch, sp
@@ -130,7 +130,11 @@ __saveall:
 
     # 切换到 内核地址空间
     csrw    satp, t0
+    fence
+    fence.i
     sfence.vma
+    fence
+    fence.i
 
 # 高地址        
 #  ------------- SP+36*8

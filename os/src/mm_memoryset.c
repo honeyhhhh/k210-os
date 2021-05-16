@@ -1,5 +1,6 @@
 #include "include/mm.h"
 #include "include/riscv_asm.h"
+#include "include/exception.h"
 
 
 struct MemorySet KERNEL_SPACE;
@@ -13,6 +14,7 @@ extern uintptr_t sdata[];
 extern uintptr_t edata[];
 extern uintptr_t sbss_with_stack[];
 extern uintptr_t ebss[];
+extern uintptr_t boot_stack_top;
 
 /*      --- MapArea ---  */
 struct MapArea *ma_new(VirtAddr start_va, VirtAddr end_va, MapType map_type, MapPermission map_perm)
@@ -31,7 +33,7 @@ struct MapArea *ma_new(VirtAddr start_va, VirtAddr end_va, MapType map_type, Map
 
 void ma_map_one(struct MapArea *self, struct PageTable *page_table, VirtPageNum vpn)
 {
-    PhysPageNum ppn;
+    PhysPageNum ppn = 0;
     if (self->map_type == Identical)
     {
         ppn = (PhysPageNum)vpn;
@@ -181,6 +183,21 @@ void new_kenel(struct MemorySet *KERNEL_SPACE)
     
     ms_map_trampoline(KERNEL_SPACE);
 
+
+
+    PhysPageNum f = frame_alloc(&FRAME_ALLOCATOR);
+    //printf("%p\n", kernelcon);
+
+    kernelcon = (struct context *)ppn2pa(f);
+    //printf("%p\n", &kernelcon);
+
+    kernelcon->kernel_satp = token(&KERNEL_SPACE->page_table);
+    //printf("%p\n", &kernelcon);
+    kernelcon->kernel_sp = (uintptr_t)&boot_stack_top;
+    kernelcon->trap_handle = (uintptr_t)&e_dispatch;
+    map(&KERNEL_SPACE->page_table, va2vpn(TRAP_CONTEXT), f, PTE_R|PTE_W);
+
+
     // 注意 权限
     printf("mapping rustsbi\n");
     ms_push(KERNEL_SPACE, ma_new((VirtAddr)RUSTSBI_BASE, (VirtAddr)skernel, Identical, VM_R|VM_X), NULL);
@@ -200,7 +217,8 @@ void new_kenel(struct MemorySet *KERNEL_SPACE)
     printf("mapping memory-mapped registers\n");
     for (int i = 0; i < sizeof(k210_memmap)/sizeof(k210_memmap[0]); i++)
     {
-        ms_push(KERNEL_SPACE, ma_new((VirtAddr)k210_memmap[i].base, (VirtAddr)(k210_memmap[i].base+k210_memmap[i].size), Identical, VM_R|VM_W), NULL);
+        if (i != 0 && i != 1 && i != 4 && i!= 3)
+            ms_push(KERNEL_SPACE, ma_new((VirtAddr)k210_memmap[i].base, (VirtAddr)(k210_memmap[i].base+k210_memmap[i].size), Identical, VM_R|VM_W), NULL);
         //printf("%d\n", i);
         //printf("%d\n", buddy_remain_size(HEAP_ALLOCATOR));
     }
@@ -212,15 +230,26 @@ void page_activate()
 {
     new_kenel(&KERNEL_SPACE);
     printf("kenel map done !\n");
-    uint64_t satp = token(&KERNEL_SPACE.page_table);
-    csr_write(CSR_SATP, satp);
-    //asm volatile("csrw satp, %0" : : "r" (satp));
-    printf("paging ... done!\n");
-    //flush_tlb_all();
-    asm volatile("sfence.vma" : : : "memory");
-    printf("flush\n");
+    page_init();
     printf("remain frame: [%d]\n", frame_remain_size(&FRAME_ALLOCATOR));
     printf("remain kheap size: [%d]\n", buddy_remain_size(HEAP_ALLOCATOR));
     // 这条写入 satp 的指令及其下一条指令都在内核内存布局的代码段中，在切换之后是一个恒等映射， 而在切换之前是视为物理地址直接取指，也可以将其看成一个恒等映射。这完全符合我们的期待：即使切换了地址空间，指令仍应该 能够被连续的执行。
 }
 
+void page_init()
+{
+    uint64_t satp = token(&KERNEL_SPACE.page_table);
+    csr_write(CSR_SATP, satp);
+    //asm volatile("csrw satp, %0" : : "r" (satp));
+    printf("satp [%p]\n", satp);
+    printf("paging ... done!\n");
+    //flush_tlb_all();
+    do {
+        asm volatile("fence");
+        asm volatile("fence.i");
+        asm volatile("sfence.vma" : : : "memory");
+        asm volatile("fence");
+        asm volatile("fence.i");
+    } while(0);
+    printf("flush\n");
+}

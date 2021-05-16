@@ -1,8 +1,8 @@
 #include "include/mm.h"
 
 
-
-struct bitmap_buddy *HEAP_ALLOCATOR;
+//extern struct bitmap_buddy *HEAP_ALLOCATOR[];
+//struct bitmap_buddy *HEAP_ALLOCATOR = (struct bitmap_buddy*)erodata;
 static uint8_t KERNEL_HEAP_ALLOCATOR[4096*4];
 static uint8_t KERNEL_HEAP_SPACE[KERNEL_HEAP_SIZE] = {0}; //bss
 
@@ -10,11 +10,14 @@ void heap_test();
 
 void heap_allocator_init()
 {
+    //printf("heap alloc init\n");
     HEAP_ALLOCATOR = buddy_new(KERNEL_HEAP_SIZE, KERNEL_HEAP_ALLOCATOR);
     HEAP_ALLOCATOR->space = (uintptr_t *)KERNEL_HEAP_SPACE;
-    printf("alloc space base: [%p] ", HEAP_ALLOCATOR->space);
-    printf("memory remain size :[%d] byte\n", buddy_remain_size(HEAP_ALLOCATOR));
+    //printf("alloc space base: [%p] ", &HEAP_ALLOCATOR->space);
+    //printf("memory remain size :[%d] byte\n", buddy_remain_size(HEAP_ALLOCATOR));
     //heap_test();
+
+    //printf("[%p]\n",HEAP_ALLOCATOR);
 }
 
 void heap_test()

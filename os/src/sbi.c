@@ -51,6 +51,11 @@ void set_timer(uint64_t stime_value)
     sbi_ecall(SBI_SET_TIMER, 0, stime_value, 0, 0, 0, 0, 0);
 }
 
+void sbi_send_ipi(const unsigned long *hart_mask)
+{
+	sbi_ecall(SBI_SEND_IPI, 0, (unsigned long)hart_mask, 0, 0, 0, 0, 0);
+}
+
 
 
 

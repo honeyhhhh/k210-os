@@ -125,6 +125,7 @@ struct bitmap_buddy* buddy_new(int size, void *bbase)
     self->min_alloc_size = 8;
     self->space = NULL;
     node_size = 2*size; 
+    initlock(&self->lock, "kheap");
     //管理的二叉树节点是 管理内存单元个数的 2倍 - 1
 
     //初始化二叉树节点，为所对应的的内存块大小
@@ -153,13 +154,12 @@ struct bitmap_buddy* buddy_new(int size, void *bbase)
     // 实际节点数
     uint32_t bit_node_size = size/self->min_alloc_size + size/(self->min_alloc_size*2);
 
-    printf("max node size : [%d]k\n", size/1024); //128k 2^17 0x20000H
-    printf("bit nums: [%d]k bits\n", bit_node_size/1024); //
+    //printf("max node size : [%d]k\n", size/1024); //128k 2^17 0x20000H
+    //printf("bit nums: [%d]k bits\n", bit_node_size/1024); //
     memset(&self->bbt[i], UCHAR_MAX, bit_node_size/8);
-    printf("base %p of %d k byte's bit set 1\n", &self->bbt[i], bit_node_size/8/1024);
+    //printf("base %p of %d k byte's bit set 1\n", &self->bbt[i], bit_node_size/8/1024);
     //printf("b->size/16 - 1:[%d]\n", self->size/16-1);
  
-
     return self;
 }
 
@@ -171,7 +171,8 @@ void *buddy_alloc(struct bitmap_buddy* b, uint32_t size)
 
     if (b == NULL)
     {
-        panic("buddy no initial !\n");
+        printf("buddy no initial !\n");
+        return NULL;
     }
     // 首先将size调整到2的次幂,并检查是否超过最大限度
     if (size <= 8)

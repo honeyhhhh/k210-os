@@ -6,6 +6,7 @@
 #include "max_heap.h"
 #include "bitmap.h"
 #include "bitmap_buddy.h"
+#include "spinlock.h"
 
 #define RUSTSBI_BASE 0x80000000L
 extern uintptr_t skernel[]; //0x80200000L
@@ -170,6 +171,7 @@ static inline void flush_tlb_page(uintptr_t addr) //va ?
 /* 伙伴系统分配算法也容易分配连续物理地址的页框，但是 */
 struct FrameAllocator
 {
+    struct spinlock lock;
     struct bitmap map;
     PhysPageNum current;
     PhysPageNum end;
@@ -181,7 +183,7 @@ uint64_t frame_remain_size(struct FrameAllocator *self);
 
 
 extern struct FrameAllocator FRAME_ALLOCATOR;
-extern struct bitmap_buddy *HEAP_ALLOCATOR;
+extern struct bitmap_buddy* HEAP_ALLOCATOR;
 
 void heap_allocator_init();  // 给内核堆分配器 一块静态零初始化的字节数组 用于分配， 位于内核bss段
 void frame_allocator_init(); // 可用物理页帧管理器，[ekernel, MEMORY_END)
@@ -246,7 +248,14 @@ struct MemorySet
 extern struct MemorySet KERNEL_SPACE;
 void new_kernel();
 void page_activate();           // 初始化satp，开启分页
+void page_init();
 
+
+
+
+
+
+extern struct context* kernelcon;
 
 
 

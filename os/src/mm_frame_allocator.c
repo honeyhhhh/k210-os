@@ -7,13 +7,14 @@ struct FrameAllocator FRAME_ALLOCATOR;
 void frame_test();
 void frame_allocator_init()
 {
+    //printf("frame alloc init\n");
     FRAME_ALLOCATOR.current = pa_ceil((PhysAddr)&ekernel);
     FRAME_ALLOCATOR.end = pa_floor((PhysAddr)MEMORY_END);
     uint64_t page_nums = FRAME_ALLOCATOR.end - FRAME_ALLOCATOR.current;
-    printf("remain %d (%p ~ %p) Phys Frames \n", page_nums, FRAME_ALLOCATOR.current, FRAME_ALLOCATOR.end);
+    //printf("remain %d (%p ~ %p) Phys Frames \n", page_nums, FRAME_ALLOCATOR.current, FRAME_ALLOCATOR.end);
 
-
-    heap_init(&FRAME_ALLOCATOR.recycled,  buddy_alloc(HEAP_ALLOCATOR, 8*page_nums), page_nums);
+    // printf("[%p]\n", HEAP_ALLOCATOR);
+    heap_init(&FRAME_ALLOCATOR.recycled, NULL , page_nums);
 
     //printf("%p\n", FRAME_ALLOCATOR.recycled.heapArray);
     // frame_test();
@@ -21,6 +22,7 @@ void frame_allocator_init()
 
 PhysPageNum frame_alloc(struct FrameAllocator *self)
 {
+    PhysPageNum re = 0;
     if (!heap_empty(&self->recycled))
     {
         //printf("frame alloc from maxheap!\n");
@@ -28,7 +30,7 @@ PhysPageNum frame_alloc(struct FrameAllocator *self)
         // heap_removeMax(&self->recycled);
         PhysPageNum t = (PhysPageNum)self->recycled.heapArray[self->recycled.CurrentSize-1];
         self->recycled.CurrentSize--;      
-        return t;
+        re = t;
     }
     else
     {
@@ -41,9 +43,10 @@ PhysPageNum frame_alloc(struct FrameAllocator *self)
             //printf("frame alloc from current!\n");
 
             self->current++;
-            return self->current - 1;
+            re = self->current - 1;
         }
     }
+    return re;
 }
 
 void frame_dealloc(struct FrameAllocator *self, PhysPageNum ppn)

@@ -42,6 +42,7 @@ void *memset(void *dest, uint8_t c, size_t n)
     uint8_t *p = (uint8_t *)dest;
     for (int i = 0; i < n; ++i, *(p++) = c)
         ;
+    return dest;
 }
 
 

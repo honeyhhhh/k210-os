@@ -1,13 +1,14 @@
 #include "include/max_heap.h"
 #include "include/assert.h"
+#include "include/mm.h"
 
 void heap_init(struct maxHeap* maxheap, void *base ,const uint64_t n) // n ~ MaxSize
 {
-    // if (base == NULL)
-    // {
-    //     extern uintptr_t ;
-    //     base = ;
-    // }
+    if (base == NULL)
+    {
+        //printf("----------%p\n", HEAP_ALLOCATOR);
+        base = buddy_alloc(HEAP_ALLOCATOR, 8*n);
+    }
     maxheap->heapArray = (uint64_t *)base;
     maxheap->MaxSize = n;
     maxheap->CurrentSize = 0;

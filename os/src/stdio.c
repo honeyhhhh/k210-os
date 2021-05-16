@@ -2,10 +2,20 @@
 #include "include/stddef.h"
 #include "include/console.h"
 #include "include/string.h"
+#include "include/spinlock.h"
 
 
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
+
+
+static struct
+{
+    struct spinlock lock;
+    int locking;
+} pr;
+
+
 
 
 int getchar()
@@ -74,11 +84,16 @@ static void printptr(uint64_t x)
 void printf(const char *fmt, ...)
 {
     va_list ap;
+
+
+    acquire(&pr.lock); 
     va_start(ap, fmt);
     
     vprintf(fmt, ap);
 
     va_end(ap);
+
+    release(&pr.lock); 
 }
 
 
@@ -86,9 +101,10 @@ void printf(const char *fmt, ...)
 void vprintf(const char *fmt, va_list ap)
 {
     //va_list ap;
-    int cnt = 0, l = 0;
-    char *a, *z, *s = (char *)fmt, str;
+    int l = 0;
+    char *a, *z, *s = (char *)fmt;
     //int f = stdout;
+
 
     //va_start(ap, fmt);
     for (;;)
@@ -133,4 +149,15 @@ void vprintf(const char *fmt, va_list ap)
         s += 2;
     }
     //va_end(ap);
+
+}
+
+
+void printinit()
+{
+    initlock(&pr.lock, "pr");
+    pr.locking = 1;
+
+
+    cons_puts("print init\n");
 }

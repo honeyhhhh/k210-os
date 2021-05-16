@@ -15,19 +15,10 @@ extern uintptr_t boot_stack_top;
 
 
 
-struct context *kernelcon;
 
 
 void idt_init(void)
 {
-    PhysPageNum f = frame_alloc(&FRAME_ALLOCATOR);
-    kernelcon = (struct context *)ppn2pa(f);
-    kernelcon->kernel_satp = token(&KERNEL_SPACE.page_table);
-    kernelcon->kernel_sp = (uintptr_t)&boot_stack_top;
-    kernelcon->trap_handle = (uintptr_t)&e_dispatch;
-    map(&KERNEL_SPACE.page_table, va2vpn(TRAP_CONTEXT), f, PTE_R|PTE_W);
-
-    
 
     csr_write(CSR_SSCRATCH, TRAP_CONTEXT);
     csr_write(CSR_STVEC, TRAMPOLINE);   // 由于函数地址四字节对其，所以设置后模式为Direct
@@ -40,7 +31,7 @@ void idt_init(void)
     printf("__saveall : [%p]\n", &__saveall);
     printf("set stvec : [%p] -> [%p]\n", TRAMPOLINE, pte_get_ppn(*(find_pte(&KERNEL_SPACE.page_table, va2vpn((VirtAddr)TRAMPOLINE)))));
     printf("set trapcontex : [%p] -> [%p]\n", TRAP_CONTEXT, pte_get_ppn(*(find_pte(&KERNEL_SPACE.page_table, va2vpn((VirtAddr)TRAP_CONTEXT)))));
-
+    printf("");
     //printf("set restore : [%p]\n", &__restore);
 }
 
@@ -48,13 +39,13 @@ void idt_init(void)
 void irq_enable(void)
 {
     csr_set(CSR_SSTATUS, SSTATUS_SIE);
-    printf("irq enable!\n");
+    //cons_puts("irq enable!\n");
 }
 
 void irq_disable(void)
 {
     csr_clear(CSR_SSTATUS, SSTATUS_SIE);
-    printf("irq disable\n");
+    //cons_puts("irq disable\n");
 }
 
 // ir enable ?
@@ -73,16 +64,17 @@ void breakpoint(struct context *f)
 
 static inline void exception_dispatch(struct context *f)
 {
+    //printf("%p\n", f->cause);
     if ((intptr_t)f->cause < 0)
     {
         cons_puts("interrupt\n");
-        printf("I code :[%p]\n", f->cause);
+        //printf("I code :[%p]\n", f->cause);
         irq_handler(f);
     }
     else
     {
         cons_puts("sync_exception\n");
-        printf("E code :[%p]\n", f->cause);
+        //printf("E code :[%p]\n", f->cause);
         //printf("[%p]\n", f->epc);
         exc_handler(f);
     }
@@ -106,7 +98,7 @@ void e_return(uint64_t satp)
 }
 
 
- void e_dispatch()
+void e_dispatch()
 {
     struct context *f = (struct context *)TRAP_CONTEXT;  
     // 由于应用的 Trap 上下文不在内核地址空间，因此我们调用 current_trap_cx 来获取当前应用的 Trap 上下文的可变引用 而不是像之前那样作为参数传入
@@ -121,28 +113,41 @@ void e_return(uint64_t satp)
 
     if (spp != 0)
     {
-        printf("trap from kernel !\n");
-        satp = token(&KERNEL_SPACE.page_table);
+        cons_puts("trap from kernel !\n");
+        //satp = token(&KERNEL_SPACE.page_table);
     }
     else
-        printf("trap from user !\n");
+    {
+        cons_puts("trap from user !\n");
+    }
 
-    exception_dispatch(f);
+    if ((intptr_t)f->cause < 0)
+    {
+        cons_puts("interrupt\n");
+        //printf("I code :[%p]\n", f->cause);
+        irq_handler(f);
+    }
+    else
+    {
+        cons_puts("sync_exception\n");
+        //printf("E code :[%p]\n", f->cause);
+        //printf("[%p]\n", f->epc);
+        exc_handler(f);
+    }
+
+
     e_return(satp);
 }
 
 
 void irq_handler(struct context *f)
 {
-    intptr_t cause = (f->cause << 1) >> 1;     //去掉符号位
-    printf("%p\n",cause);
-    switch (cause) 
+    intptr_t c = (f->cause << 1) >> 1;     //去掉符号位
+    cons_puts("int\n");
+    switch (c) 
     {
         case IRQ_S_TIMER:
-            set_next_trigger();     //设置下一次时钟中断
-            if (++TICKS % TICKS_PER_SEC == 0) {
-                panic("it's time to sleep\n");
-            }
+            timer_handle();
             break;
 
         default:
