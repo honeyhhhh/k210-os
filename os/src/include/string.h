@@ -7,6 +7,9 @@ int isspace(int c);
 int isdigit(int c);
 int atoi(const char *s);
 void *memset(void *dest, uint8_t c, size_t n);
+void *memmove(void *dst, const void *src, uint n);
+void *memcpy(void *dst, const void *src, uint n);
+int memcmp(const void *v1, const void *v2, uint n);
 
 int strcmp(const char *l, const char *r);
 size_t strlen(const char *);

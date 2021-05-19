@@ -57,6 +57,27 @@ typedef struct
 #define true  1
 
 
+#define readb(addr) (*(volatile uint8_t *)(addr))
+#define readw(addr) (*(volatile uint16_t *)(addr))
+#define readd(addr) (*(volatile uint32_t *)(addr))
+#define readq(addr) (*(volatile uint64_t *)(addr))
+
+#define writeb(v, addr)                      \
+    {                                        \
+        (*(volatile uint8_t *)(addr)) = (v); \
+    }
+#define writew(v, addr)                       \
+    {                                         \
+        (*(volatile uint16_t *)(addr)) = (v); \
+    }
+#define writed(v, addr)                       \
+    {                                         \
+        (*(volatile uint32_t *)(addr)) = (v); \
+    }
+#define writeq(v, addr)                       \
+    {                                         \
+        (*(volatile uint64_t *)(addr)) = (v); \
+    }
 
 
 

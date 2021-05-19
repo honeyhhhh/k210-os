@@ -7,6 +7,10 @@
 #include "include/mm.h"
 #include "include/spinlock.h"
 #include "include/sbi.h"
+#include "include/proc.h"
+#include "include/sdcard.h"
+#include "include/fpioa.h"
+#include "include/dmac.h"
 
 int i;
 extern uintptr_t skernel[];
@@ -36,8 +40,21 @@ void main(uint64_t hartid, uint64_t dtb_pa)
 
 	if (hartid == 0)
 	{
-		//memset(&sbss, 0, &ebss - &sbss); //清空bss段
+		memset(&sbss, 0, &ebss - &sbss); //清空bss段
 		printinit();
+
+
+
+
+
+
+
+
+		uint64_t ie1 = csr_read(CSR_SIE);
+		uint64_t sst1 = csr_read(CSR_SSTATUS);
+		uint64_t ssc1 = csr_read(CSR_SSCRATCH);
+		uint64_t vec1 = csr_read(CSR_STVEC);
+
 		printf("in core : \033[31m[%d]\033[0m\n", hartid);
 		printf("%s", "hello, world!\n");
 
@@ -49,38 +66,49 @@ void main(uint64_t hartid, uint64_t dtb_pa)
 		printf(".bss : 			[%p ~ %p]\n", &sbss, &ebss);
 		printf("kernel_end: 		[%p]\n", &ekernel);
 
+
+	
+		__sync_synchronize();
+
+
 		mm_init();
 		idt_init();
 		irq_enable();
+		csr_set(CSR_SIE, IE_EIE|IE_SIE|IE_TIE);
 		__sync_synchronize();
 
-		uint64_t vec = csr_read(CSR_STVEC);
-		printf("%p\n",vec);
 
-		printf("%d\n", irq_get());
 
-		//irq_disable();
-		//printf("%d\n", irq_get());
+
+		uint64_t ie2 = csr_read(CSR_SIE);
+		uint64_t sst2 = csr_read(CSR_SSTATUS);
+		uint64_t ssc2 = csr_read(CSR_SSCRATCH);
+		printf("SIE: %p->%p\n", ie1,ie2);
+		printf("sstatus: %p->%p\n", sst1,sst2);
+		printf("sscratch: %p->%p\n", ssc1,ssc2);
+
+		uint64_t vec2 = csr_read(CSR_STVEC);
+		printf("stvec: %p->%p\n",vec1,vec2);
+
+
 		printf("sp :%p\n", kernelcon->kernel_sp);
 		printf("satp :%p\n", kernelcon->kernel_satp);
 		printf("handle : %p\n", kernelcon->trap_handle);
 
-		asm volatile ("ebreak");
-		printf(" ? \n");
-		asm volatile ("ebreak");
-		printf(" ? \n");
+		// asm volatile ("ebreak");
+		// printf(" ? \n");
+		// asm volatile ("ebreak");
+		// printf(" ? \n");
 
-		//struct spinlock l1;
-		//struct spinlock l2;
+		procinit();
+		fpioa_pin_init();
+		dmac_init();
+		sdcard_init();
+		test_sdcard();
 
-		//initlock(&l1, "l1");
+		while (1);
+	
 
-		//acquire(&l1);
-		//release(&l1);
-		//acquire(&l1);
-		//panic("unreachable !\n");
-
-		//printf(" ? ");
 		for (int i = 1; i < NCPU; i++)
 		{
 			unsigned long mask = 1 << i;
@@ -89,8 +117,6 @@ void main(uint64_t hartid, uint64_t dtb_pa)
 		__sync_synchronize();
 		started = 1;
 
-		// int p1 = irq_get();
-		// printf("%d\n", p1);
 
 		uint64_t x2;
 		asm volatile("mv %0, tp"
@@ -104,22 +130,35 @@ void main(uint64_t hartid, uint64_t dtb_pa)
 
 
 
+
 		//timer_init();
 
-
-		//panic("shoutdown !\n");
+		
 	}
 	else
 	{
-		//printf("in core : \033[31m[%d]\033[0m \n", hartid);
 
 		while (started == 0)
 			;
 		__sync_synchronize();
 
+		uint64_t sst1 = csr_read(CSR_SSTATUS);
+		uint64_t ssc1 = csr_read(CSR_SSCRATCH);
+		uint64_t ie1 = csr_read(CSR_SIE);
 
 		page_init();
 		idt_init();
+		csr_set(CSR_SIE, IE_EIE|IE_SIE|IE_TIE);
+		__sync_synchronize();
+
+		uint64_t sst2 = csr_read(CSR_SSTATUS);
+		uint64_t ssc2 = csr_read(CSR_SSCRATCH);
+		uint64_t ie2 = csr_read(CSR_SIE);
+		printf("SIE: %p->%p\n", ie1,ie2);
+		printf("sstatus: %p->%p\n", sst1,sst2);
+		printf("sscratch: %p->%p\n", ssc1,ssc2);
+
+
 
 		uint64_t x1;
 		asm volatile("mv %0, tp"
@@ -131,22 +170,31 @@ void main(uint64_t hartid, uint64_t dtb_pa)
 		asm volatile("csrr %0, satp"
 					 : "=r"(s2));
 		printf("satp :[%p]\n", s2);
-		// int p2 = irq_get();
-		// printf("%d\n", p2);
+
 		
 		uint64_t vec = csr_read(CSR_STVEC);
 		printf("%p\n",vec);
 
 
-		printf("%d\n", irq_get());
 
 
 
 
-		//asm volatile ("ebreak");
-		//printf(" ? \n");
 
-		//sbi_shutdown();
-		//panic("shutdown ! in core : \033[31m[%d]\033[0m\n", hartid);
+
+
+		__sync_synchronize();
+
+
+		asm volatile ("ebreak");
+		asm volatile ("ebreak");
+		asm volatile ("ebreak");
+
+
+		printf("?\n");
+
+		
+		while (1);
+		
 	}
 }

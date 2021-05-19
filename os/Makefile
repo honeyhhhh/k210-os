@@ -70,7 +70,15 @@ OBJS += \
   $S/mm_frame_allocator.o \
   $S/mm_page_table.o \
   $S/mm_memoryset.o \
-  $S/spinlock.o
+  $S/spinlock.o \
+  $S/d_utils.o \
+  $S/d_sysctl.o \
+  $S/d_spi.o \
+  $S/d_gpiohs.o \
+  $S/d_fpioa.o \
+  $S/d_dmac.o \
+  $S/d_sdcard.o \
+  $S/tk_proc.o
 
 #SRC1 := $(wildcard $S/*.c)
 #SRC2 := $(wildcard $S/*.S)
@@ -120,9 +128,11 @@ endif
 
 k210: $(bin)
 	@dd if=$(bin) of=$(rustsbi_bin) bs=128k seek=1
-	#@$(OBJDUMP) -D -b binary -m riscv $(rustsbi_bin) > $T/k210.asm
+	@$(OBJDUMP) -D -b binary -m riscv $(rustsbi_bin) > $T/k210.asm
 	@sudo chmod 777 $(k210-serialport)
 	@python3 ./tools/kflash.py -p $(k210-serialport) -b 1500000 -t $(rustsbi_bin)
+	#python3 -m serial.tools.miniterm --eol LF --dtr 0 --rts 0 --filter direct $(k210-serialport) 115200
+
 
 
 
@@ -133,5 +143,5 @@ k210: $(bin)
 
 
 clean:
-	-rm -f $S/*.o \
+	-rm -f $S/*.o $S/*.d \
 	$T/*

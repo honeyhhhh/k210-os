@@ -64,7 +64,6 @@ void breakpoint(struct context *f)
 
 static inline void exception_dispatch(struct context *f)
 {
-    //printf("%p\n", f->cause);
     if ((intptr_t)f->cause < 0)
     {
         cons_puts("interrupt\n");
@@ -100,7 +99,8 @@ void e_return(uint64_t satp)
 
 void e_dispatch()
 {
-    struct context *f = (struct context *)TRAP_CONTEXT;  
+    struct context *f = (struct context *)TRAP_CONTEXT; 
+    warn("%p\n", f->epc);
     // 由于应用的 Trap 上下文不在内核地址空间，因此我们调用 current_trap_cx 来获取当前应用的 Trap 上下文的可变引用 而不是像之前那样作为参数传入
 
     //printf("%p\n", f->status);
@@ -135,6 +135,7 @@ void e_dispatch()
         exc_handler(f);
     }
 
+    __sync_synchronize();
 
     e_return(satp);
 }
@@ -170,6 +171,10 @@ void exc_handler(struct context *f)
         
         case EXC_SYSCALL:
             syscall_handler(f);
+            break;
+        
+        case EXC_INST_ACCESS_FAULT:
+            panic("inst access fault: %p\n", f->epc);
             break;
 
         default:

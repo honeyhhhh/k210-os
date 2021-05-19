@@ -2,6 +2,7 @@
 #include "include/exception.h"
 #include "include/assert.h"
 #include "include/console.h"
+#include "include/proc.h"
 
 
 struct spinlock lock_locks;
@@ -50,12 +51,14 @@ void initlock(struct spinlock *lk, char *name)
 {
     lk->name = name;
     lk->locked = 0;
+
+    lk->cpu = NULL;
 }
 
 bool holding(struct spinlock *lk)
 {
     int r;
-    r = (lk->locked);// && lk->cpu == mycpu());
+    r = (lk->locked  && lk->cpu == mycpu());
     return r;
 }
 
@@ -67,6 +70,8 @@ void acquire(struct spinlock *lk)
     // 1 disable interrupts to avoid deadlock.
     push_off();
     // 2 Check whether this cpu is holding the lock.
+    if (holding(lk))
+        panic("dead lock\n");
 
     // 3
     while(__sync_lock_test_and_set(&lk->locked, 1) != 0)
@@ -78,14 +83,15 @@ void acquire(struct spinlock *lk)
     //warn("%s get lock!\n", lk->name);
 
     // 5 Record info about lock acquisition for holding() and debugging.
-
+    lk->cpu = mycpu();
 }
 void release(struct spinlock *lk)
 {
     // 1 Check whether this cpu is holding the lock.
-
+    if (!holding(lk))
+        panic("?????\n");
     // 2 lk->cpu = 0
-
+    lk->cpu = 0;
     // 3
     __sync_synchronize();
 
@@ -98,24 +104,28 @@ void release(struct spinlock *lk)
     pop_off();
 }
 
+
+// push_off/pop_off are like irq_disable()/irq_enable() except that they are matched:
+// it takes two pop_off()s to undo two push_off()s.  Also, if interrupts  are initially off, then push_off, pop_off leaves them off.
+
 void push_off(void)
 {
-    //int old = irq_get(); //是否开启中断
+    bool old = irq_get(); //是否开启中断
 
     irq_disable();
-    // if(mycpu()->noff == 0)
-    //     mycpu()->intena = old;  //inetna 表示在push off之前是否开启中断
-    // mycpu()->noff += 1;          // Depth of push_off() nesting 嵌套层数
+    if(mycpu()->depth_of_ir == 0)
+        mycpu()->ir_enable = old;  //表示在push off之前是否开启中断
+    mycpu()->depth_of_ir += 1;          // Depth of push_off() nesting 嵌套层数
 }
 
 void pop_off(void)
 {
-    // struct cpu *c = mycpu();
-    // if(irq_get())
-    //     panic("pop_off - interruptible");
-    // if(c->noff < 1)
-    //     panic("pop_off");
-    // c->noff -= 1;
-    // if(c->noff == 0 && c->intena)
-    irq_enable();
+    struct Processor *c = mycpu();
+    if(irq_get())
+        panic("pop_off when irq_enable\n");
+    if(c->depth_of_ir < 1)
+        panic("pop_off without a push off\n");
+    c->depth_of_ir -= 1;
+    if(c->depth_of_ir == 0 && c->ir_enable)
+        irq_enable();
 }

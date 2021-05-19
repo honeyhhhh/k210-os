@@ -56,25 +56,25 @@ struct TaskContext
 /* 进程控制块　*/
 enum TaskStatus
 {
-    Ready, Running, Zombie
+    Ready, Running, Zombie, SLEEPING
 };
 
 struct TaskControlBlock
 {
-    struct spinlock tcb_lock;
+    // immutable
     pid_t pid;
     struct Kstack kernel_stack;
 
-
-    enum TaskStatus task_status;
-    uintptr_t task_cx_ptr;
-    PhysPageNum trap_cx_ppn;
-    uint64_t base_size;
-    struct MemorySet *memory_set;
-    
+    // mutable
+    struct spinlock tcb_lock;
+    enum TaskStatus task_status;        // 维护当前进程的执行状态
+    uintptr_t task_cx_ptr;              // 指出一个暂停的任务的任务上下文在内核地址空间（更确切的说是在自身内核栈）中的位置，用于任务切换。
+    PhysPageNum trap_cx_ppn;            // 指出了应用地址空间中的 Trap 上下文被放在的物理页帧的物理页号。
+    uintptr_t base_size;                 // 应用数据仅有可能出现在应用地址空间低于 base_size 字节的区域中
+    struct MemorySet *memory_set;       // 用户进程地址空间，内存管理的信息
+    uint32_t exit_code;                 // 当进程调用 exit 系统调用主动退出或者执行出错由内核终止的时候，它的退出码 exit_code 会被内核保存在它的任务控制块中，并等待它的父进程通过 waitpid 回收它的资源的同时也收集它的 PID 以及退出码。
+    struct TaskControlBlock *parent;  //父进程的指针, 有利于维护父进程对于子进程的一些特殊操作。使用 Weak 而非 Arc 来包裹另一个任务控制块，因此这个智能指针将不会影响父进程的引用计数。
 };
-
-
 
 
 /* 任务管理器 */
@@ -88,9 +88,18 @@ extern struct TaskManager TASK_MANAGER;
 /* 处理器管理结构　Per-CPU  */
 struct Processor
 {
+    struct TaskControlBlock *current;  //在当前处理器上正在执行的任务
+    struct TaskContext context;
+
+    int depth_of_ir;
+    bool ir_enable;
 
 };
+extern struct Processor cpus[NCPU];
 
+void procinit();
+uint64_t cpuid();
+struct Processor* mycpu();
 
 
 

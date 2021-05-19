@@ -14,7 +14,9 @@
         "initializer_list": "c",
         "utility": "c",
         "max_heap.h": "c",
-        "cmath": "c"
+        "cmath": "c",
+        "utils.h": "c",
+        "sysctl.h": "c"
     },
     //"C_Cpp.errorSquiggles": "Disabled",
     //"C_Cpp.dimInactiveRegions": false

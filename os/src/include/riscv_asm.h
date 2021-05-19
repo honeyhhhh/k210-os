@@ -208,6 +208,13 @@ static inline uint64_t r_mhartid()
 	return x;
 }
 
+static inline uint64_t r_tp()
+{
+	uint64_t x;
+  	asm volatile("mv %0, tp" : "=r" (x) );
+	return x;
+}
+
 
 
 

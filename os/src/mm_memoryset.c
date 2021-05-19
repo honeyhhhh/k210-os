@@ -175,6 +175,7 @@ static const struct MemmapEntry {
     [K210_SPI0] =        { 0x52000000,        0x1000 },
     [K210_SPI1] =        { 0x53000000,        0x1000 },
     [K210_SPI2] =        { 0x54000000,        0x1000 },
+    [K210_DMAC] =        { 0x50000000,        0x1000 },
 };
 
 void new_kenel(struct MemorySet *KERNEL_SPACE)
@@ -217,7 +218,7 @@ void new_kenel(struct MemorySet *KERNEL_SPACE)
     printf("mapping memory-mapped registers\n");
     for (int i = 0; i < sizeof(k210_memmap)/sizeof(k210_memmap[0]); i++)
     {
-        if (i != 0 && i != 1 && i != 4 && i!= 3)
+        if (i != 0 && i != 1 && i != 4 && i != 3)
             ms_push(KERNEL_SPACE, ma_new((VirtAddr)k210_memmap[i].base, (VirtAddr)(k210_memmap[i].base+k210_memmap[i].size), Identical, VM_R|VM_W), NULL);
         //printf("%d\n", i);
         //printf("%d\n", buddy_remain_size(HEAP_ALLOCATOR));
