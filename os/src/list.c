@@ -43,6 +43,9 @@ void list_remove(struct list_elem* pelem)
     pelem->prev->next = pelem->next;
     pelem->next->prev = pelem->prev;
 
+    pelem->prev = NULL;
+    pelem->next = NULL;
+
     //intr_set_status(old_status);
 }
 

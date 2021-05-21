@@ -4,6 +4,7 @@
 #include "stddef.h"
 #include "mm.h"
 #include "spinlock.h"
+#include "list.h"
 
 
 /* 进程标识符 */
@@ -11,7 +12,7 @@ typedef uint64_t pid_t;
 struct PidAllocator
 {
     struct spinlock pid_lock;
-    uint64_t current;
+    uint64_t current;           // 初始１
     uint64_t recycled_stack[31];
     uint8_t sp;
 };
@@ -56,7 +57,7 @@ struct TaskContext
 /* 进程控制块　*/
 enum TaskStatus
 {
-    Ready, Running, Zombie, SLEEPING
+    UNINIT, Ready, Running, Zombie, Sleeping
 };
 
 struct TaskControlBlock
@@ -74,22 +75,32 @@ struct TaskControlBlock
     struct MemorySet *memory_set;       // 用户进程地址空间，内存管理的信息
     uint32_t exit_code;                 // 当进程调用 exit 系统调用主动退出或者执行出错由内核终止的时候，它的退出码 exit_code 会被内核保存在它的任务控制块中，并等待它的父进程通过 waitpid 回收它的资源的同时也收集它的 PID 以及退出码。
     struct TaskControlBlock *parent;  //父进程的指针, 有利于维护父进程对于子进程的一些特殊操作。使用 Weak 而非 Arc 来包裹另一个任务控制块，因此这个智能指针将不会影响父进程的引用计数。
+
+    struct list_elem tag;
+    struct list_elem all;
+
 };
 
 
 /* 任务管理器 */
 struct TaskManager
 {
-
+    struct spinlock lock;
+    struct list ready_queue;
+    //struct list sleep_vec;
+    struct list all_task;
 };
 extern struct TaskManager TASK_MANAGER;
+void tm_init();
+void task_add(struct TaskControlBlock *task);
+struct TaskControlBlock *task_fetch();
 
 
 /* 处理器管理结构　Per-CPU  */
 struct Processor
 {
     struct TaskControlBlock *current;  //在当前处理器上正在执行的任务
-    struct TaskContext context;
+    uintptr_t idle_task_cx_ptr;
 
     int depth_of_ir;
     bool ir_enable;
@@ -100,6 +111,9 @@ extern struct Processor cpus[NCPU];
 void procinit();
 uint64_t cpuid();
 struct Processor* mycpu();
+struct TaskControlBlock *mytask();
+void sleep(struct list *wait_queue, struct spinlock *lock);
+void wakeup_fromwq(struct list *wait_queue);
 
 
 

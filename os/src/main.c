@@ -9,6 +9,7 @@
 #include "include/sbi.h"
 #include "include/proc.h"
 #include "include/sdcard.h"
+#include "include/disk.h"
 #include "include/fpioa.h"
 #include "include/dmac.h"
 
@@ -70,8 +71,10 @@ void main(uint64_t hartid, uint64_t dtb_pa)
 	
 		__sync_synchronize();
 
-
+		// mm
 		mm_init();
+
+		// trap
 		idt_init();
 		irq_enable();
 		csr_set(CSR_SIE, IE_EIE|IE_SIE|IE_TIE);
@@ -100,11 +103,26 @@ void main(uint64_t hartid, uint64_t dtb_pa)
 		// asm volatile ("ebreak");
 		// printf(" ? \n");
 
+
 		procinit();
+		// fs
 		fpioa_pin_init();
 		dmac_init();
-		sdcard_init();
+		disk_init();
 		test_sdcard();
+
+		// task
+		add_initproc();  // add_task()
+
+
+
+
+		
+
+
+
+
+
 
 		while (1);
 	
