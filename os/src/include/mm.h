@@ -7,11 +7,13 @@
 #include "bitmap.h"
 #include "bitmap_buddy.h"
 #include "spinlock.h"
+#include "exception.h"
 
 #define RUSTSBI_BASE 0x80000000L
 extern uintptr_t skernel[]; //0x80200000L
 #define KERNEL_HEAP_SIZE (4096 * 32)
 #define KERNEL_STACK_SIZE (4096 * 4)
+#define USER_STACK_SIZE (4096 * 2)
 extern uintptr_t ekernel;
 #define MEMORY_END 0x80600000L
 // [ekernel, MEMORY_END)
@@ -128,7 +130,7 @@ int pte_writable(Pte pte);
 int pte_excutable(Pte pte);
 /* 通过pnn返回页表项数组 , 用于根据当前页索引找到页表项 */
 Pte *get_pte_array(PhysPageNum ppn);
-
+uint8_t *get_byte_array(PhysPageNum ppn);
 
 
 struct fvec
@@ -250,6 +252,11 @@ extern struct MemorySet KERNEL_SPACE;
 void new_kernel();
 void page_activate();           // 初始化satp，开启分页
 void page_init();
+void insert_framed_area(struct MemorySet *self, VirtAddr start_va, VirtAddr end_va, MapPermission perm);
+
+void ms_init(struct MemorySet *self);
+void ms_map_uinit(struct MemorySet *ums, uint8_t *initcode, uint32_t icsize, struct context *trap_cx, uint32_t cxsize);
+void ms_map_trampoline(struct MemorySet *self);
 
 
 

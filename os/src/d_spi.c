@@ -201,6 +201,7 @@ void spi_send_data_standard(spi_device_num_t spi_num, spi_chip_select_t chip_sel
     // configASSERT(spi_num < SPI_DEVICE_MAX && spi_num != 2);
     // uint8_t *v_buf = malloc(cmd_len + tx_len);
     uint8_t *v_buf = (uint8_t *)buddy_alloc(HEAP_ALLOCATOR, cmd_len + tx_len);
+
     uint64_t i;
     for(i = 0; i < cmd_len; i++)
         v_buf[i] = cmd_buff[i];
@@ -211,6 +212,8 @@ void spi_send_data_standard(spi_device_num_t spi_num, spi_chip_select_t chip_sel
     // free((void *)v_buf);
     // kfree((void *)v_buf);
     buddy_free(HEAP_ALLOCATOR, v_buf);
+    //printf("remain kheap size: [%d]\n", buddy_remain_size(HEAP_ALLOCATOR));
+
 }
 
 void spi_receive_data_standard(spi_device_num_t spi_num, spi_chip_select_t chip_select, const uint8_t *cmd_buff,
@@ -403,6 +406,8 @@ void spi_send_data_normal_dma(dmac_channel_number_t channel_num, spi_device_num_
     if(spi_transfer_width != SPI_TRANS_INT)
     {
         buddy_free(HEAP_ALLOCATOR, buf);
+        //printf("remain kheap size: [%d]\n", buddy_remain_size(HEAP_ALLOCATOR));
+
     }
         //kfree((void *)buf);
 
@@ -492,6 +497,8 @@ void spi_receive_data_standard_dma(dmac_channel_number_t dma_send_channel_num,
 
     //kfree(write_cmd);
     buddy_free(HEAP_ALLOCATOR, write_cmd);
+    //printf("remain kheap size: [%d]\n", buddy_remain_size(HEAP_ALLOCATOR));
+
 }
 
 void spi_send_data_standard_dma(dmac_channel_number_t channel_num, spi_device_num_t spi_num,
@@ -555,4 +562,6 @@ void spi_send_data_standard_dma(dmac_channel_number_t channel_num, spi_device_nu
 
     //kfree((void *)buf);
     buddy_free(HEAP_ALLOCATOR, buf);
+    //printf("remain kheap size: [%d]\n", buddy_remain_size(HEAP_ALLOCATOR));
+
 }

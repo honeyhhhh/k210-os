@@ -31,7 +31,7 @@ void idt_init(void)
     printf("__saveall : [%p]\n", &__saveall);
     printf("set stvec : [%p] -> [%p]\n", TRAMPOLINE, pte_get_ppn(*(find_pte(&KERNEL_SPACE.page_table, va2vpn((VirtAddr)TRAMPOLINE)))));
     printf("set trapcontex : [%p] -> [%p]\n", TRAP_CONTEXT, pte_get_ppn(*(find_pte(&KERNEL_SPACE.page_table, va2vpn((VirtAddr)TRAP_CONTEXT)))));
-    printf("");
+    // printf("");
     //printf("set restore : [%p]\n", &__restore);
 }
 
@@ -58,7 +58,7 @@ bool irq_get(void)
 
 void breakpoint(struct context *f)
 {
-    printf("Breakpoint at [%p]!\n", f->epc);
+    warn("Breakpoint at [%p]!\n", f->epc);
     f->epc += 2; //?
 }
 
@@ -81,8 +81,9 @@ static inline void exception_dispatch(struct context *f)
 }
 
 
-void e_return(uint64_t satp)
+void e_return()
 {
+    uint64_t satp = token(&KERNEL_SPACE.page_table); // current_task_token
     // satp  要继续执行的应用 地址空间的 token
     //　Trap 上下文在应用地址空间中的虚拟地址 , 内核和应用都一样TRAP_CONTEXT
     uint64_t restore_va = &__restore - &__saveall + TRAMPOLINE;
@@ -100,7 +101,7 @@ void e_return(uint64_t satp)
 void e_dispatch()
 {
     struct context *f = (struct context *)TRAP_CONTEXT; 
-    warn("%p\n", f->epc);
+    //warn("%p\n", f->epc);
     // 由于应用的 Trap 上下文不在内核地址空间，因此我们调用 current_trap_cx 来获取当前应用的 Trap 上下文的可变引用 而不是像之前那样作为参数传入
 
     //printf("%p\n", f->status);
@@ -109,7 +110,7 @@ void e_dispatch()
     unsigned long spp = csr_read(CSR_SSTATUS) & SSTATUS_SPP;
     //printf("[%p]\n", spp);
 
-    uint64_t satp = token(&KERNEL_SPACE.page_table);
+    //uint64_t satp = token(&KERNEL_SPACE.page_table);
 
     if (spp != 0)
     {
@@ -137,14 +138,14 @@ void e_dispatch()
 
     __sync_synchronize();
 
-    e_return(satp);
+    e_return();
 }
 
 
 void irq_handler(struct context *f)
 {
     intptr_t c = (f->cause << 1) >> 1;     //去掉符号位
-    cons_puts("int\n");
+    //cons_puts("int\n");
     switch (c) 
     {
         case IRQ_S_TIMER:
@@ -188,21 +189,20 @@ void set_sp(struct context *c, uintptr_t sp)
     c->gr.sp = sp;
 }
 
-struct context *app_context_init(uintptr_t entry, uintptr_t u_sp, uintptr_t k_satp, uintptr_t k_sp, uintptr_t trap_handle)
+void app_context_init(struct context *app, uintptr_t entry, uintptr_t u_sp, uintptr_t k_satp, uintptr_t k_sp, uintptr_t trap_handle)
 {
     uintptr_t sstatus = csr_read(CSR_SSTATUS);
-    sstatus |= SSTATUS_SPP;
+    sstatus &= ~SSTATUS_SPP; // ? 如果从用户态进入中断， sstatus 的 SPP 位被硬件设为 0    或者 下降特权级到用户态
+    sstatus |= SSTATUS_SPIE; // enable interrupts in U
 
-    struct context *app = (struct context *)buddy_alloc(HEAP_ALLOCATOR, sizeof(struct context));
     memset(app, 0, sizeof(struct context));
+    app->status = sstatus;
     app->gr.sp = u_sp;
     app->epc = entry;
     app->kernel_satp = k_satp;
     app->kernel_sp = k_sp;
     app->trap_handle = trap_handle;
 
-
-    return app;
 }
 
 

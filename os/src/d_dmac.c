@@ -262,7 +262,7 @@ void dmac_init(void)
     dmac_reset_u_t dmac_reset;
 
     sysctl_clock_enable(SYSCTL_CLOCK_DMA);
-    // printf("[dmac_init] dma clk=%d\n", sysctl_clock_get_freq(SYSCTL_CLOCK_DMA));
+    //printf("[dmac_init] dma clk=%d\n", sysctl_clock_get_freq(SYSCTL_CLOCK_DMA));
 
     dmac_reset.data = readq(&dmac->reset);
     dmac_reset.reset.rst = 1;

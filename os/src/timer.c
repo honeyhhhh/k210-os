@@ -12,7 +12,7 @@ const uint64_t K210_CLOCK_FREQ = 403000000 / 62;
 // 1000ms = 1s
 const uint64_t MSEC_PER_SEC = 1000;
 // 时钟中断间隔
-static uint64_t INTERVAL = 100000;
+static uint64_t INTERVAL = (390000000 / 200);//100000; // (390000000 / 200)
 // 触发时钟中断计数 < cycle
 struct spinlock tickslock;
 uint64_t TICKS = 0;      
@@ -26,7 +26,17 @@ inline uint64_t get_time()
 
 uint64_t get_time_ms()
 {
-    return get_time() / (QEMU_CLOCK_FREQ / MSEC_PER_SEC);
+    return get_time() / (K210_CLOCK_FREQ / MSEC_PER_SEC);
+}
+
+// supervisor-mode cycle counter
+static inline uint64_t r_time()
+{
+    uint64_t x;
+    // asm volatile("csrr %0, time" : "=r" (x) );
+    // this instruction will trap in SBI
+    asm volatile("rdtime %0" : "=r" (x) );
+    return x;
 }
 
 
@@ -61,27 +71,26 @@ void timer_init()
 {
     initlock(&tickslock, "time");
     csr_set(CSR_SIE, IE_TIE);  //in trapinit
-    set_next_trigger();
-    //printf("timer start work....\n");
-    //printf("%d\n%d\n%d\n", get_time(), get_time_ms(), get_time_v2());
+    // set_next_trigger();
+    // printf("timer start work....\n");
+    // printf("%d\n", r_time());
 }
 
 
 void set_next_trigger()
 {
-    set_timer(get_time() + INTERVAL);
+    set_timer(r_time() + INTERVAL);
 }
 
 void timer_handle()
 {
-    acquire(&tickslock);
+    //acquire(&tickslock);
     TICKS++;
-    release(&tickslock);
+    //release(&tickslock);
     set_next_trigger();
 
     if (TICKS % TICKS_PER_SEC == 0)
     {
         panic("shutdown in timer \n");
     }
-
 }

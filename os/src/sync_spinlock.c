@@ -110,6 +110,7 @@ void release(struct spinlock *lk)
 
 void push_off(void)
 {
+    //cons_puts("push\n");
     bool old = irq_get(); //是否开启中断
 
     irq_disable();
@@ -120,6 +121,7 @@ void push_off(void)
 
 void pop_off(void)
 {
+    //cons_puts("pop\n");
     struct Processor *c = mycpu();
     if(irq_get())
         panic("pop_off when irq_enable\n");

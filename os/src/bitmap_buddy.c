@@ -249,7 +249,6 @@ void *buddy_alloc(struct bitmap_buddy* b, uint32_t size)
             b->bbt[index] = MAX(b->bbt[LEFT_LEAF(index)], b->bbt[RIGHT_LEAF(index)]);
         }
     }
-
     return (void *)((uint64_t)b->space +  offset); //?
 }
 

@@ -63,7 +63,7 @@ bool irq_get(void);
 
 void idt_init(void);
 
-
+void e_return();
 void e_dispatch();
 void irq_handler(struct context *f);
 void exc_handler(struct context *f);
@@ -71,7 +71,7 @@ void exc_handler(struct context *f);
 
 void set_sp(struct context *c, uintptr_t sp);
 
-struct context *app_context_init(uintptr_t entry, uintptr_t u_sp, uintptr_t k_satp, uintptr_t k_sp, uintptr_t trap_handle);
+void app_context_init(struct context *app, uintptr_t entry, uintptr_t u_sp, uintptr_t k_satp, uintptr_t k_sp, uintptr_t trap_handle);
 
 
 #endif

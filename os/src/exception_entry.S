@@ -28,7 +28,8 @@
 # 进入中断
 # 保存 Context 并且进入的中断处理函数
 __saveall:
-    
+    #li t0,
+    #jr t0
     # 判断是从内核态还是 用户态进入 中断
     # 原子操作交换sp和sscratch
     csrrw   sp, sscratch, sp
@@ -129,12 +130,16 @@ __saveall:
     LOAD    sp, 37
 
     # 切换到 内核地址空间
+    # li t0,0x800000000008005d
     csrw    satp, t0
     fence
     fence.i
     sfence.vma
     fence
     fence.i
+
+    # li t1,0x000000008002305e
+    #jr t1
 
 # 高地址        
 #  ------------- SP+36*8
@@ -165,6 +170,7 @@ __saveall:
     # jump to usertrap(), which does not return
 
     # jalr x0，t1，0
+    # li t1,0x00000000800230a8
     jr t1
 
     .globl __restore
@@ -192,7 +198,11 @@ __restore:
     # 然后将 sp 修改为 Trap 上下文的位置，后面基于它恢复各通用寄存器和 CSR。
 
     csrw    satp, a1
+    fence
+    fence.i
     sfence.vma
+    fence
+    fence.i
 
 
 

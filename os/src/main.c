@@ -42,7 +42,10 @@ void main(uint64_t hartid, uint64_t dtb_pa)
 	if (hartid == 0)
 	{
 		memset(&sbss, 0, &ebss - &sbss); //清空bss段
+		irq_enable();
+
 		printinit();
+		procinit();
 
 
 
@@ -68,18 +71,16 @@ void main(uint64_t hartid, uint64_t dtb_pa)
 		printf("kernel_end: 		[%p]\n", &ekernel);
 
 
-	
-		__sync_synchronize();
-
 		// mm
 		mm_init();
 
 		// trap
 		idt_init();
-		irq_enable();
+		timer_init();
 		csr_set(CSR_SIE, IE_EIE|IE_SIE|IE_TIE);
-		__sync_synchronize();
+		set_next_trigger();
 
+		
 
 
 
@@ -89,22 +90,16 @@ void main(uint64_t hartid, uint64_t dtb_pa)
 		printf("SIE: %p->%p\n", ie1,ie2);
 		printf("sstatus: %p->%p\n", sst1,sst2);
 		printf("sscratch: %p->%p\n", ssc1,ssc2);
-
 		uint64_t vec2 = csr_read(CSR_STVEC);
 		printf("stvec: %p->%p\n",vec1,vec2);
-
-
 		printf("sp :%p\n", kernelcon->kernel_sp);
 		printf("satp :%p\n", kernelcon->kernel_satp);
 		printf("handle : %p\n", kernelcon->trap_handle);
 
-		// asm volatile ("ebreak");
-		// printf(" ? \n");
-		// asm volatile ("ebreak");
-		// printf(" ? \n");
+		asm volatile ("ebreak");
+		printf(" ? \n");
 
 
-		procinit();
 		// fs
 		fpioa_pin_init();
 		dmac_init();
@@ -112,10 +107,12 @@ void main(uint64_t hartid, uint64_t dtb_pa)
 		test_sdcard();
 
 		// task
-		add_initproc();  // add_task()
+		add_initproc();  
 
 
+		asm volatile("ebreak");
 
+		printf("?\n");
 
 		
 
@@ -123,8 +120,12 @@ void main(uint64_t hartid, uint64_t dtb_pa)
 
 
 
+		while (1)
+		{
+			;
+		}
+		
 
-		while (1);
 	
 
 		for (int i = 1; i < NCPU; i++)
@@ -149,7 +150,6 @@ void main(uint64_t hartid, uint64_t dtb_pa)
 
 
 
-		//timer_init();
 
 		
 	}

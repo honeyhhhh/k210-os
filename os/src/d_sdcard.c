@@ -327,9 +327,7 @@ void sdcard_init(void) {
 	if (0 != result) {
 		panic("sdcard_init failed");
 	}
-	#ifdef DEBUG
 	printf("sdcard_init\n");
-	#endif
 }
 
 void sdcard_read_sector(uint8_t *buf, int sectorno) {
@@ -474,5 +472,4 @@ void test_sdcard(void) {
 		printf("\n");
 	}
 
-	while (1) ;
 }

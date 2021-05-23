@@ -2,10 +2,13 @@
 #define _LIST_H
 
 #include "stddef.h"
+#include "spinlock.h"
 
-#define offset(struct_type,member) (int)(&((struct_type*)0)->member)
+
+
+#define offset(struct_type,member) (uint64_t)(&((struct_type *)0)->member)
 #define elem2entry(struct_type, struct_member_name, elem_ptr) \
-            (struct_type*)((int)elem_ptr - offset(struct_type, struct_member_name))
+            (struct_type *)((uint64_t)elem_ptr - offset(struct_type, struct_member_name))
 
 /******* 定义链表节点成员结构 *******/
 struct list_elem
@@ -17,6 +20,7 @@ struct list_elem
 /*链表结构，用来实现队列*/
 struct list
 {
+    struct spinlock lock;
     struct list_elem head;   //队首，是固定不变的，不是第一个元素，第一个元素为head.next
     struct list_elem tail;   //队尾，同样是固定不变的
 };

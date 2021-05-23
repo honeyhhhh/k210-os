@@ -4,6 +4,7 @@
 /*初始化双向链表*/
 void list_init(struct list* list)
 {
+    initlock(&list->lock, "list");
     list->head.prev = NULL;
     list->head.next = &list->tail;
     list->tail.prev = &list->head;
@@ -13,7 +14,6 @@ void list_init(struct list* list)
 /*把链表元素elem插入在元素before之前*/
 void list_insert_before(struct list_elem* before, struct list_elem* elem)
 {
-    //enum intr_status old_status = intr_disable();
     
     before->prev->next = elem;
     elem->prev = before->prev;
@@ -26,13 +26,17 @@ void list_insert_before(struct list_elem* before, struct list_elem* elem)
 /*添加元素到链表队首，类似栈push操作*/
 void list_push(struct list* plist, struct list_elem* elem)
 {
+    acquire(&plist->lock);
     list_insert_before(plist->head.next, elem);   //在队头插入elem
+    release(&plist->lock);
 }
 
 /*追加元素到链表对尾，类似队列的先进先出操作*/
 void list_append(struct list* plist, struct list_elem* elem)
 {
+    acquire(&plist->lock);
     list_insert_before(&plist->tail, elem);   //在队尾的前面插入
+    release(&plist->lock);
 }
 
 /*使元素pelem脱离链表*/
@@ -46,14 +50,15 @@ void list_remove(struct list_elem* pelem)
     pelem->prev = NULL;
     pelem->next = NULL;
 
-    //intr_set_status(old_status);
 }
 
 /*将链表第一个元素弹出并返回，类似栈的pop操作*/
 struct list_elem* list_pop(struct list* plist)
 {
+    acquire(&plist->lock);
     struct list_elem* elem = plist->head.next;
     list_remove(elem);
+    release(&plist->lock);
     return elem;
 }
 

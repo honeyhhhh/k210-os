@@ -11,14 +11,15 @@
 typedef uint64_t pid_t;
 struct PidAllocator
 {
-    struct spinlock pid_lock;
+    struct spinlock lock;
     uint64_t current;           // 初始１
     uint64_t recycled_stack[31];
     uint8_t sp;
 };
 extern struct PidAllocator PID_ALLOCATOR;
-pid_t pid_alloc(struct PidAllocator *self);
-void pid_dealloc(struct PidAllocator *self, pid_t pid);
+void pid_init();
+pid_t pid_alloc();
+void pid_dealloc(pid_t pid);
 
 /*  内核栈　*/
 struct Kstack
@@ -26,9 +27,9 @@ struct Kstack
     pid_t pid;
 };
 void kernel_stack_pos(pid_t pid, uint64_t *pos);    //根据进程标识符计算内核栈在内核地址空间中的位置，随即将一个逻辑段插入内核地址空间 KERNEL_SPACE 中
-void ks_init(struct Kstack *self, pid_t pid);        //从一个已分配的进程标识符中对应生成一个内核栈 KernelStack
+void ks_new(pid_t pid);        //从一个已分配的进程标识符中对应生成一个内核栈 KernelStack
 //void ks_free(struct　KStack *self);     // 在内核地址空间中将对应的逻辑段删除, 并将对应的物理页回收
-uintptr_t ks_get_top(struct Kstack *self);
+uintptr_t ks_get_top(pid_t pid);
 
 
 
@@ -64,7 +65,7 @@ struct TaskControlBlock
 {
     // immutable
     pid_t pid;
-    struct Kstack kernel_stack;
+    //struct Kstack kernel_stack;
 
     // mutable
     struct spinlock tcb_lock;
@@ -100,7 +101,8 @@ struct TaskControlBlock *task_fetch();
 struct Processor
 {
     struct TaskControlBlock *current;  //在当前处理器上正在执行的任务
-    uintptr_t idle_task_cx_ptr;
+    uintptr_t idle_task_cx_ptr; //表示当前处理器上的 idle 执行流的任务上下文的地址。
+    // 每个 Processor 都有一个不同的 idle 执行流，它们运行在每个核各自的启动栈上，功能是尝试从任务管理器中选出一个任务来在当前核上执行。在内核初始化完毕之后，每个核都会通过调用 run_tasks 函数来进入 idle 执行流：
 
     int depth_of_ir;
     bool ir_enable;
@@ -108,10 +110,14 @@ struct Processor
 };
 extern struct Processor cpus[NCPU];
 
-void procinit();
+
 uint64_t cpuid();
 struct Processor* mycpu();
 struct TaskControlBlock *mytask();
+
+
+void procinit();
+void add_initproc();
 void sleep(struct list *wait_queue, struct spinlock *lock);
 void wakeup_fromwq(struct list *wait_queue);
 

@@ -70,7 +70,9 @@ OBJS += \
   $S/mm_frame_allocator.o \
   $S/mm_page_table.o \
   $S/mm_memoryset.o \
-  $S/spinlock.o \
+  $S/list.o \
+  $S/sync_spinlock.o \
+  $S/sync_sem.o \
   $S/d_utils.o \
   $S/d_sysctl.o \
   $S/d_spi.o \
@@ -78,7 +80,12 @@ OBJS += \
   $S/d_fpioa.o \
   $S/d_dmac.o \
   $S/d_sdcard.o \
-  $S/tk_proc.o
+  $S/tk_proc.o \
+  $S/tk_manage.o \
+  $S/tk_pid.o \
+  $S/fs_disk.o \
+  $S/fs_buf.o
+
 
 #SRC1 := $(wildcard $S/*.c)
 #SRC2 := $(wildcard $S/*.S)

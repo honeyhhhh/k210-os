@@ -41,6 +41,8 @@ void ma_map_one(struct MapArea *self, struct PageTable *page_table, VirtPageNum 
     if (self->map_type == Framed)
     {
         PhysPageNum frame = frame_alloc(&FRAME_ALLOCATOR);
+        uint8_t *p = get_byte_array(frame);
+        memset(p, 0, PAGE_SIZE);
         ppn = frame;
         // data_frames 插入（vpn 和 对应的 frame）
     }
@@ -78,7 +80,7 @@ void ma_unmap(struct MapArea *self, struct PageTable *page_table)
 
 /*      --- MemorySet ---  */
 
-void ms_new(struct MemorySet *self)
+void ms_init(struct MemorySet *self)
 {
     pt_new(&self->page_table);
     self->head = NULL;
@@ -105,14 +107,19 @@ void ms_remove(struct MemorySet *self, VirtPageNum vpn_start)
 }
 
 // 如果在当前地址空间插入一个 Framed 方式映射到 物理内存的逻辑段，要保证同一地址空间内的任意两个逻辑段不能存在交集
-static void ms_push(struct MemorySet *self, struct MapArea *map_area, uint8_t *data)
+static void ms_push(struct MemorySet *self, struct MapArea *map_area, uint8_t *data, uint32_t size)
 {
     // map
     ma_map(map_area, &self->page_table);
     // 拷贝数据
-    if (data != NULL)
+    if (data != NULL)  // 这里假设数据不超过一个页
     {
-
+        // 切片 data 中的数据拷贝到当前逻辑段实际被内核放置在的各物理页帧上，从而 在地址空间中通过该逻辑段就能访问这些数据。
+        //调用它的时候需要满足：切片 data 中的数据大小不超过当前逻辑段的 总大小，且切片中的数据会被对齐到逻辑段的开头，然后逐页拷贝到实际的物理页帧。
+        PhysAddr dst = pte_get_pa(*(find_pte(&self->page_table, map_area->vm_start)));
+        memmove((void *)dst, data, size);
+        printf("dst:[%p]", dst);
+        printf("    src:[%p]\n", data);
     }
     // 在area链表中插入新节点
     if (self->head == NULL)
@@ -129,10 +136,28 @@ static void ms_push(struct MemorySet *self, struct MapArea *map_area, uint8_t *d
     }
 }
 
+void insert_framed_area(struct MemorySet *self, VirtAddr start_va, VirtAddr end_va, MapPermission perm)
+{
+    ms_push(self, ma_new(start_va, end_va, Framed, perm), NULL, 0);
+}
+
 void ms_map_trampoline(struct MemorySet *self)
 {
     // 并没有新增逻辑段 MemoryArea 而是直接在多级页表中插入一个从地址空间的最高虚拟页面映射到 跳板汇编代码所在的物理页帧的键值对，访问方式限制与代码段相同，即 RX 。
     map(&self->page_table, va2vpn(TRAMPOLINE), pa2ppn((PhysAddr)strampoline), PTE_R | PTE_X);
+}
+
+void ms_map_kcontext(struct MemorySet *self)
+{
+    PhysPageNum f = frame_alloc(&FRAME_ALLOCATOR);
+    //printf("%p\n", kernelcon);
+    kernelcon = (struct context *)ppn2pa(f);
+    //printf("%p\n", &kernelcon);
+    kernelcon->kernel_satp = token(&self->page_table);
+    //printf("%p\n", &kernelcon);
+    kernelcon->kernel_sp = (uintptr_t)&boot_stack_top;
+    kernelcon->trap_handle = (uintptr_t)&e_dispatch;
+    map(&self->page_table, va2vpn(TRAP_CONTEXT), f, PTE_R|PTE_W);
 }
 
 
@@ -180,46 +205,37 @@ static const struct MemmapEntry {
 
 void new_kenel(struct MemorySet *KERNEL_SPACE)
 {
-    ms_new(KERNEL_SPACE);
+    ms_init(KERNEL_SPACE);
     
-    ms_map_trampoline(KERNEL_SPACE);
+    // 无新增逻辑段
+    ms_map_trampoline(KERNEL_SPACE); // 最高页面 
+    ms_map_kcontext(KERNEL_SPACE);  //　次高页面 
 
 
 
-    PhysPageNum f = frame_alloc(&FRAME_ALLOCATOR);
-    //printf("%p\n", kernelcon);
-
-    kernelcon = (struct context *)ppn2pa(f);
-    //printf("%p\n", &kernelcon);
-
-    kernelcon->kernel_satp = token(&KERNEL_SPACE->page_table);
-    //printf("%p\n", &kernelcon);
-    kernelcon->kernel_sp = (uintptr_t)&boot_stack_top;
-    kernelcon->trap_handle = (uintptr_t)&e_dispatch;
-    map(&KERNEL_SPACE->page_table, va2vpn(TRAP_CONTEXT), f, PTE_R|PTE_W);
 
 
     // 注意 权限
-    printf("mapping rustsbi\n");
-    ms_push(KERNEL_SPACE, ma_new((VirtAddr)RUSTSBI_BASE, (VirtAddr)skernel, Identical, VM_R|VM_X), NULL);
+    printf("mapping rustsbi\n"); // 没必要
+    ms_push(KERNEL_SPACE, ma_new((VirtAddr)RUSTSBI_BASE, (VirtAddr)skernel, Identical, VM_R|VM_X), NULL, 0);
 
     printf("mapping .text\n");
-    ms_push(KERNEL_SPACE, ma_new((VirtAddr)stext, (VirtAddr)etext, Identical, VM_R|VM_X), NULL);
+    ms_push(KERNEL_SPACE, ma_new((VirtAddr)stext, (VirtAddr)etext, Identical, VM_R|VM_X), NULL, 0);
     printf("mapping .rodata\n");
-    ms_push(KERNEL_SPACE, ma_new((VirtAddr)srodata, (VirtAddr)erodata, Identical, VM_R), NULL);
+    ms_push(KERNEL_SPACE, ma_new((VirtAddr)srodata, (VirtAddr)erodata, Identical, VM_R), NULL, 0);
     printf("mapping .data\n");
-    ms_push(KERNEL_SPACE, ma_new((VirtAddr)sdata, (VirtAddr)edata, Identical, VM_R|VM_W), NULL);
+    ms_push(KERNEL_SPACE, ma_new((VirtAddr)sdata, (VirtAddr)edata, Identical, VM_R|VM_W), NULL, 0);
     printf("mapping .bss\n");
-    ms_push(KERNEL_SPACE, ma_new((VirtAddr)sbss_with_stack, (VirtAddr)ebss, Identical, VM_R|VM_W), NULL);
+    ms_push(KERNEL_SPACE, ma_new((VirtAddr)sbss_with_stack, (VirtAddr)ebss, Identical, VM_R|VM_W), NULL, 0);
     printf("mapping ekernel~MEMORY_END\n");
-    ms_push(KERNEL_SPACE, ma_new((VirtAddr)&ekernel, (VirtAddr)MEMORY_END, Identical, VM_R|VM_W), NULL);
+    ms_push(KERNEL_SPACE, ma_new((VirtAddr)(&ekernel), (VirtAddr)MEMORY_END, Identical, VM_R|VM_W), NULL, 0);
 
 
     printf("mapping memory-mapped registers\n");
     for (int i = 0; i < sizeof(k210_memmap)/sizeof(k210_memmap[0]); i++)
     {
         if (i != 0 && i != 1 && i != 4 && i != 3)
-            ms_push(KERNEL_SPACE, ma_new((VirtAddr)k210_memmap[i].base, (VirtAddr)(k210_memmap[i].base+k210_memmap[i].size), Identical, VM_R|VM_W), NULL);
+            ms_push(KERNEL_SPACE, ma_new((VirtAddr)k210_memmap[i].base, (VirtAddr)(k210_memmap[i].base+k210_memmap[i].size), Identical, VM_R|VM_W), NULL, 0);
         //printf("%d\n", i);
         //printf("%d\n", buddy_remain_size(HEAP_ALLOCATOR));
     }
@@ -253,4 +269,27 @@ void page_init()
         asm volatile("fence.i");
     } while(0);
     printf("flush\n");
+}
+
+
+
+void ms_map_uinit(struct MemorySet *ums, uint8_t *initcode, uint32_t icsize, struct context *trap_cx, uint32_t cxsize)
+{
+    ms_init(ums);
+
+    // Ttampoline
+    ms_map_trampoline(ums);
+
+    // Trap Context
+    ms_push(ums, ma_new((VirtAddr)TRAP_CONTEXT, (VirtAddr)TRAMPOLINE, Framed, VM_R|VM_W), (void *)trap_cx, cxsize);  //物理页号通过find_pte获取
+
+    // initcode   [s, e)
+    struct MapArea *ma =  ma_new((VirtAddr)0, (VirtAddr)icsize, Framed, VM_R|VM_W|VM_X|VM_U);
+    ms_push(ums, ma, initcode, icsize);
+
+    // userstack
+    VirtAddr user_stack_bottom = vpn2va(va_ceil((VirtAddr)icsize + PAGE_SIZE));
+    VirtAddr user_stack_top = user_stack_bottom + USER_STACK_SIZE;
+    ms_push(ums, ma_new(user_stack_bottom, user_stack_top, Framed, VM_R|VM_W|VM_U), NULL, 0);
+
 }
