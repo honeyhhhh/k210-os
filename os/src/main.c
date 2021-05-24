@@ -54,10 +54,10 @@ void main(uint64_t hartid, uint64_t dtb_pa)
 
 
 
-		uint64_t ie1 = csr_read(CSR_SIE);
-		uint64_t sst1 = csr_read(CSR_SSTATUS);
-		uint64_t ssc1 = csr_read(CSR_SSCRATCH);
-		uint64_t vec1 = csr_read(CSR_STVEC);
+		// uint64_t ie1 = csr_read(CSR_SIE);
+		// uint64_t sst1 = csr_read(CSR_SSTATUS);
+		// uint64_t ssc1 = csr_read(CSR_SSCRATCH);
+		// uint64_t vec1 = csr_read(CSR_STVEC);
 
 		printf("in core : \033[31m[%d]\033[0m\n", hartid);
 		printf("%s", "hello, world!\n");
@@ -78,53 +78,51 @@ void main(uint64_t hartid, uint64_t dtb_pa)
 		idt_init();
 		timer_init();
 		csr_set(CSR_SIE, IE_EIE|IE_SIE|IE_TIE);
-		set_next_trigger();
+		//set_next_trigger();
 
-		
+		printf("e_dispatch [%p]\n", &e_dispatch);
+		printf("e_return [%p]\n", &e_return);
 
 
 
-		uint64_t ie2 = csr_read(CSR_SIE);
-		uint64_t sst2 = csr_read(CSR_SSTATUS);
-		uint64_t ssc2 = csr_read(CSR_SSCRATCH);
-		printf("SIE: %p->%p\n", ie1,ie2);
-		printf("sstatus: %p->%p\n", sst1,sst2);
-		printf("sscratch: %p->%p\n", ssc1,ssc2);
-		uint64_t vec2 = csr_read(CSR_STVEC);
-		printf("stvec: %p->%p\n",vec1,vec2);
-		printf("sp :%p\n", kernelcon->kernel_sp);
-		printf("satp :%p\n", kernelcon->kernel_satp);
-		printf("handle : %p\n", kernelcon->trap_handle);
+		// uint64_t ie2 = csr_read(CSR_SIE);
+		// uint64_t sst2 = csr_read(CSR_SSTATUS);
+		// uint64_t ssc2 = csr_read(CSR_SSCRATCH);
+		// printf("SIE: %p->%p\n", ie1,ie2);
+		// printf("sstatus: %p->%p\n", sst1,sst2);
+		// printf("sscratch: %p->%p\n", ssc1,ssc2);
+		// uint64_t vec2 = csr_read(CSR_STVEC);
+		// printf("stvec: %p->%p\n",vec1,vec2);
+		// printf("sp :%p\n", kernelcon->kernel_sp);
+		// printf("satp :%p\n", kernelcon->kernel_satp);
+		// printf("handle : %p\n", kernelcon->trap_handle);
 
-		asm volatile ("ebreak");
-		printf(" ? \n");
+		//asm volatile ("ebreak");
+		printf("-----------------------------------------------\n");
 
 
 		// fs
 		fpioa_pin_init();
 		dmac_init();
 		disk_init();
-		test_sdcard();
+		//test_sdcard();
+		printf("-----------------------------------------------\n");
 
 		// task
-		add_initproc();  
+		add_initproc();
+		task_run();
+
+		// asm volatile("ebreak");
+		// printf("?\n");
 
 
-		asm volatile("ebreak");
-
-		printf("?\n");
-
-		
+		// uint64_t *p = (void *)0x0000000090022358;
+		// *p = 1;
 
 
+    	panic("Unreachable in main!");
 
 
-
-		while (1)
-		{
-			;
-		}
-		
 
 	
 

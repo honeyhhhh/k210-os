@@ -118,8 +118,8 @@ static void ms_push(struct MemorySet *self, struct MapArea *map_area, uint8_t *d
         //调用它的时候需要满足：切片 data 中的数据大小不超过当前逻辑段的 总大小，且切片中的数据会被对齐到逻辑段的开头，然后逐页拷贝到实际的物理页帧。
         PhysAddr dst = pte_get_pa(*(find_pte(&self->page_table, map_area->vm_start)));
         memmove((void *)dst, data, size);
-        printf("dst:[%p]", dst);
-        printf("    src:[%p]\n", data);
+        //printf("dst:[%p]", dst);
+        //printf("    src:[%p]\n", data);
     }
     // 在area链表中插入新节点
     if (self->head == NULL)

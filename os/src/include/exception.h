@@ -49,6 +49,7 @@ struct context {
     uintptr_t tval; //stval
     uintptr_t cause; //scause
 
+
     // 在应用初始化的时候由内核写入应用地址空间中的 TrapContext 的相应位置，此后就不再被修改。
     uintptr_t kernel_satp;  //内核地址空间的token
     uintptr_t kernel_sp;       // 当前应用在内核地址空间中的内核栈栈顶的虚拟地址；

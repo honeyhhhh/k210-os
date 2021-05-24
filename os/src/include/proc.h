@@ -5,6 +5,7 @@
 #include "mm.h"
 #include "spinlock.h"
 #include "list.h"
+#include "exception.h"
 
 
 /* 进程标识符 */
@@ -36,11 +37,11 @@ uintptr_t ks_get_top(pid_t pid);
 
 
 
-
+// 13 个　8B
 struct TaskContext
 {
     uint64_t ra;    // trap_return()
-    uint64_t sp;
+    //uint64_t sp;
     uint64_t s0;
     uint64_t s1;
     uint64_t s2;
@@ -67,10 +68,11 @@ struct TaskControlBlock
     pid_t pid;
     //struct Kstack kernel_stack;
 
+
     // mutable
     struct spinlock tcb_lock;
     enum TaskStatus task_status;        // 维护当前进程的执行状态
-    uintptr_t task_cx_ptr;              // 指出一个暂停的任务的任务上下文在内核地址空间（更确切的说是在自身内核栈）中的位置，用于任务切换。
+    struct TaskContext *task_cx_ptr;              // 指出一个暂停的任务的任务上下文在内核地址空间（更确切的说是在自身内核栈）中的位置，用于任务切换。
     PhysPageNum trap_cx_ppn;            // 指出了应用地址空间中的 Trap 上下文被放在的物理页帧的物理页号。
     uintptr_t base_size;                 // 应用数据仅有可能出现在应用地址空间低于 base_size 字节的区域中
     struct MemorySet *memory_set;       // 用户进程地址空间，内存管理的信息
@@ -101,9 +103,9 @@ struct TaskControlBlock *task_fetch();
 struct Processor
 {
     struct TaskControlBlock *current;  //在当前处理器上正在执行的任务
-    uintptr_t idle_task_cx_ptr; //表示当前处理器上的 idle 执行流的任务上下文的地址。
+    struct TaskContext *idle_task_cx; //表示当前处理器上的 idle 执行流的任务上下文。
     // 每个 Processor 都有一个不同的 idle 执行流，它们运行在每个核各自的启动栈上，功能是尝试从任务管理器中选出一个任务来在当前核上执行。在内核初始化完毕之后，每个核都会通过调用 run_tasks 函数来进入 idle 执行流：
-
+    // 而反过来，当一个应用用尽了内核本轮分配给它的时间片或者它主动调用 yield 系统调用交出 CPU 使用权之后，进入内核后它会调用 schedule 函数来切换到 idle 执行流并开启新一轮的任务调度。
     int depth_of_ir;
     bool ir_enable;
 
@@ -114,16 +116,18 @@ extern struct Processor cpus[NCPU];
 uint64_t cpuid();
 struct Processor* mycpu();
 struct TaskControlBlock *mytask();
-
+uint64_t mytask_token();
+struct context *mytask_trap_cx();
 
 void procinit();
 void add_initproc();
+void task_run();
 void sleep(struct list *wait_queue, struct spinlock *lock);
 void wakeup_fromwq(struct list *wait_queue);
 
 
 
-
+extern void __switch(const uint64_t current_task_cx_ptr, const uint64_t next_task_cx_ptr);
 
 
 

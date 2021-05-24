@@ -1,4 +1,5 @@
 #include "include/list.h"
+#include "include/stdio.h"
 
 
 /*初始化双向链表*/
@@ -14,13 +15,12 @@ void list_init(struct list* list)
 /*把链表元素elem插入在元素before之前*/
 void list_insert_before(struct list_elem* before, struct list_elem* elem)
 {
-    
+    //printf("[%p] [%p] [%p] [%p] ", before->prev, elem, elem->prev, elem->next);
+
     before->prev->next = elem;
     elem->prev = before->prev;
     elem->next = before;
     before->prev = elem;
-
-    //intr_set_status(old_status);
 }
 
 /*添加元素到链表队首，类似栈push操作*/
@@ -35,6 +35,7 @@ void list_push(struct list* plist, struct list_elem* elem)
 void list_append(struct list* plist, struct list_elem* elem)
 {
     acquire(&plist->lock);
+    
     list_insert_before(&plist->tail, elem);   //在队尾的前面插入
     release(&plist->lock);
 }
@@ -47,8 +48,8 @@ void list_remove(struct list_elem* pelem)
     pelem->prev->next = pelem->next;
     pelem->next->prev = pelem->prev;
 
-    pelem->prev = NULL;
-    pelem->next = NULL;
+    // pelem->prev = NULL;
+    // pelem->next = NULL;
 
 }
 

@@ -18,12 +18,25 @@ void tm_init()
 // 即使在多核情况下，我们也只有单个任务管理器共享给所有的核来使用。然而在其他设计中，每个核可能都有一个自己独立的任务管理器来管理仅可以在自己上面运行的任务。
 void task_add(struct TaskControlBlock *task)
 {
+    acquire(&TASK_MANAGER.lock);
     list_append(&TASK_MANAGER.ready_queue, &task->tag);
     list_append(&TASK_MANAGER.all_task, &task->all);
+    release(&TASK_MANAGER.lock);
 }
 struct TaskControlBlock *task_fetch()
 {
+    acquire(&TASK_MANAGER.lock);
+
+    if (list_empty(&TASK_MANAGER.ready_queue))
+        return NULL;
+
     struct TaskControlBlock *p = elem2entry(struct TaskControlBlock , tag, list_pop(&TASK_MANAGER.ready_queue));
+    // printf("fetch :pid [%p]\n", p->pid);
+    // printf("fetch :token [%p]\n", token(&p->memory_set->page_table));
+    // printf("fetch :switch cx [%p]\n",p->task_cx_ptr);
+    // printf("fetch :trap cx [%p]\n", p->trap_cx_ppn);
+    // printf("fetch :status [%p]\n",p->task_status);
+    release(&TASK_MANAGER.lock);
 
     return p;
 }

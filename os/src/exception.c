@@ -7,6 +7,7 @@
 #include "include/syscall.h"
 #include "include/assert.h"
 #include "include/mm.h"
+#include "include/proc.h"
 
 extern void __saveall(void);
 extern void __restore(void);
@@ -32,7 +33,7 @@ void idt_init(void)
     printf("set stvec : [%p] -> [%p]\n", TRAMPOLINE, pte_get_ppn(*(find_pte(&KERNEL_SPACE.page_table, va2vpn((VirtAddr)TRAMPOLINE)))));
     printf("set trapcontex : [%p] -> [%p]\n", TRAP_CONTEXT, pte_get_ppn(*(find_pte(&KERNEL_SPACE.page_table, va2vpn((VirtAddr)TRAP_CONTEXT)))));
     // printf("");
-    //printf("set restore : [%p]\n", &__restore);
+    printf("__restore : [%p]\n", &__restore);
 }
 
 
@@ -83,7 +84,17 @@ static inline void exception_dispatch(struct context *f)
 
 void e_return()
 {
-    uint64_t satp = token(&KERNEL_SPACE.page_table); // current_task_token
+    // 在下降到Ｕ特权级时要注意sp
+    // uint64_t x;
+    // asm volatile("mv %0, sp" : "=r" (x) );
+    // printf("sp:[%p]\n", x);
+    //asm volatile("fence");
+    //asm volatile("fence.i");
+    uint64_t satp = mytask_token();//token(&KERNEL_SPACE.page_table); // current_task_token
+    //asm volatile("fence");
+    
+    //warn("satp : [%p]", satp);
+    // cons_puts("?"); //　会产生非法
     // satp  要继续执行的应用 地址空间的 token
     //　Trap 上下文在应用地址空间中的虚拟地址 , 内核和应用都一样TRAP_CONTEXT
     uint64_t restore_va = &__restore - &__saveall + TRAMPOLINE;
@@ -100,8 +111,7 @@ void e_return()
 
 void e_dispatch()
 {
-    struct context *f = (struct context *)TRAP_CONTEXT; 
-    //warn("%p\n", f->epc);
+    struct context *f = mytask_trap_cx(); 
     // 由于应用的 Trap 上下文不在内核地址空间，因此我们调用 current_trap_cx 来获取当前应用的 Trap 上下文的可变引用 而不是像之前那样作为参数传入
 
     //printf("%p\n", f->status);
@@ -119,7 +129,7 @@ void e_dispatch()
     }
     else
     {
-        cons_puts("trap from user !\n");
+        cons_puts("trap from user ! \n");
     }
 
     if ((intptr_t)f->cause < 0)
@@ -177,8 +187,13 @@ void exc_handler(struct context *f)
         case EXC_INST_ACCESS_FAULT:
             panic("inst access fault: %p\n", f->epc);
             break;
+        
+        case EXC_STORE_ACCESS_FAULT:
+            panic("page fault epc - %p  cause - [%p]\n", f->epc, f->cause);
+            break;
 
         default:
+            panic("epc - %p  cause - [%p]\n", f->epc, f->cause);
             break;
     }
 }

@@ -83,6 +83,7 @@ OBJS += \
   $S/tk_proc.o \
   $S/tk_manage.o \
   $S/tk_pid.o \
+  $S/tk_switch.o \
   $S/fs_disk.o \
   $S/fs_buf.o
 

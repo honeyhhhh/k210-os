@@ -96,10 +96,10 @@ __saveall:
 
     # 保存 x1
     SAVE    x1, 1
-
-    # 保存 x3 - x31
-    .set    n, 3
-    .rept   29
+    SAVE    x3, 3
+    # 保存 x5 - x31
+    .set    n, 5
+    .rept   27
         N %n SAVE
         .set    n, n + 1
     .endr
@@ -196,6 +196,7 @@ __restore:
     # 由于 Trap 上下文是保存在应用地址空间中的，所以我们先切换回应用地址空间。
     # 再我们将传入的 Trap 上下文位置保存在 sscratch 寄存器中，这样 __alltraps 中才能基于它将 Trap 上下文 保存到正确的位置。
     # 然后将 sp 修改为 Trap 上下文的位置，后面基于它恢复各通用寄存器和 CSR。
+    # a0: *TrapContext in user space(Constant); a1: user space token
 
     csrw    satp, a1
     fence
@@ -207,25 +208,30 @@ __restore:
 
 
 
-    # LOAD    s1, 32
-
-    # andi    s0, s1, 1 << 8
-    # bnez    s0, to_k
-
-to_u:
     #　addi    s0, sp, REG_SIZE*CONTEXT_SIZE
     #　csrw    sscratch, s0
 
     csrw    sscratch, a0
     mv      sp, a0
+    # now sp points to TrapContext in user space, start restoring based on it
+
     # 如果 返回用户态， 需要设置sscratch 为内核 栈 地址（未分配context空间），而现在需要设置为　Ｔｒａｐ上下文在用户地址空间的位置
     # 如果 返回内核态， sscratch要清零， 在saveall中已经清零 ？
 
-to_k:
+
+    LOAD    s1, 32
+
+    #andi    s0, s1, 1 << 8
+    #bnez    s0, to_k
+
+#to_u:
+    #li s2, 0xfffffffffffff000
+
+
+#to_k:
 
 
     # 恢复 CSR
-
     LOAD    s2, 33
     LOAD    s3, 34
     LOAD    s4, 35
@@ -237,9 +243,10 @@ to_k:
     # 恢复 x1
     LOAD    x1, 1
 
-    # 恢复 x3 至 x31
-    .set    n, 3
-    .rept   29
+    LOAD    x3, 3
+    # 恢复 x5 至 x31
+    .set    n, 5
+    .rept   27
         N %n LOAD
         .set    n, n + 1
     .endr

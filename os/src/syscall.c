@@ -1,5 +1,6 @@
 #include "include/syscall.h"
 #include "include/stdio.h"
+#include "include/assert.h"
 
 
 /*
@@ -14,6 +15,7 @@ static int (*syscalls[])(uint64_t arg[]) = {
 
 void syscall_handler(struct context *f)
 {
+    panic("ecall from user!\n");
     f->epc += 4;
 }
 

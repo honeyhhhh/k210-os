@@ -27,10 +27,12 @@ void sem_wait(struct semaphore *s)
 
         // 2、当 wait 带着锁 s->lock 进入睡眠后，signal就会在希望获得锁时一直阻塞，死锁。
         // 解决方法：sleep 必须将锁作为一个参数，然后在进入睡眠状态后释放之；这样能避免遗失的唤醒。一旦进程被唤醒了，sleep 在返回之前还需要重新获得锁。
+        //asm volatile("ebreak");
 
         sleep(&s->waiters, &s->lock);
     }
-    s->pid = mytask()->pid;
+    if (mytask() != NULL)
+        s->pid = mytask()->pid;
     release(&s->lock);
 }
 
